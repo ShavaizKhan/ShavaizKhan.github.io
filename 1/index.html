@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assignment 1 — SYDE 572</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <span class="brand">SYDE 572</span>
+      <nav>
+        <a href="../index.html">Home</a>
+        <a href="#part1">Part 1</a>
+        <a href="#part2">Part 2</a>
+        <a href="#handwritten">Worked by Hand</a>
+      </nav>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="hero">
+      <div class="kicker">Assignment 1</div>
+      <h1>Distance to a Function &amp; Curve Fitting</h1>
+      <p class="lede">Finding the shortest distance from a point to a curve, and fitting a line
+      and a parabola to data — each solved analytically and numerically, then verified against each other.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PART ONE -->
+    <!-- ============================================================ -->
+    <h2 id="part1">Part One — Distance from a Point to a Function</h2>
+    <p>For a point (x₀, y₀) and a curve y = f(x), the squared distance from the point to any
+    location on the curve is D(x) = (x − x₀)² + (f(x) − y₀)². Minimizing D(x) is equivalent to
+    minimizing the true distance d(x), and avoids an unnecessary square root.</p>
+
+    <h3>Analytical approach</h3>
+    <p>The assignment's four-step derivation, applied generically before specializing to a parabola:</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <div class="body"><p><strong>Differentiate D(x):</strong></p>
+        <div class="eq">D'(x) = 2(x − x₀) + 2(f(x) − y₀)·f'(x)</div></div>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <div class="body"><p><strong>Set D'(x) = 0.</strong> Dividing by 2 gives the orthogonality condition —
+        the vector from the point to the curve is perpendicular to the curve's tangent:</p>
+        <div class="eq">(x − x₀) + (f(x) − y₀)·f'(x) = 0</div></div>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <div class="body"><p><strong>Solve for x.</strong> For y = f(x) = x² + 5, f'(x) = 2x, and y₀ = 0,
+        this reduces to a depressed cubic:</p>
+        <div class="eq">2x³ + 11x − x₀ = 0</div>
+        <p>Its derivative, 6x² + 11, is always positive, so D'(x) is strictly increasing — there is exactly
+        one real root for any x₀, with no local-minimum ambiguity. Rather than Cardano's formula, a
+        cleaner closed form for the one-real-root case uses a hyperbolic substitution:</p>
+        <div class="eq">x* = −2√(p/3) · sinh( (1/3)·arcsinh( (3q)/(2p)·√(3/p) ) ), &nbsp; p = 11/2, q = −x₀/2</div></div>
+      </div>
+      <div class="step">
+        <div class="num">4</div>
+        <div class="body"><p><strong>Plug x* back into the original distance formula</strong> d = √[(x*−x₀)² + (f(x*)−y₀)²].</p></div>
+      </div>
+    </div>
+
+    <table>
+      <thead><tr><th>x₀</th><th>x*</th><th>f(x*)</th><th>distance d</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>0.0000</td><td>5.0000</td><td class="hero-num">5.0000</td></tr>
+        <tr><td>−4</td><td>−0.3555</td><td>5.1264</td><td class="hero-num">6.2898</td></tr>
+        <tr><td>−8</td><td>−0.6721</td><td>5.4517</td><td class="hero-num">9.1334</td></tr>
+        <tr><td>2</td><td>0.1807</td><td>5.0327</td><td class="hero-num">5.3514</td></tr>
+        <tr><td>6</td><td>0.5199</td><td>5.2703</td><td class="hero-num">7.6031</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Numerical approach</h3>
+    <p>Two algorithms compute the same distances without solving the cubic symbolically:</p>
+    <ul>
+      <li><strong>Newton-Raphson</strong> on D'(x) = 0, using D''(x) for the update step. Fast, but needs
+      f' and f'' — supplied analytically for the parabola, or numerically (central differences) for
+      arbitrary functions.</li>
+      <li><strong>Golden Section Search</strong> directly minimizes D(x) within a bracket [a, b], using no
+      derivatives at all — slower, but robust for any unimodal objective.</li>
+    </ul>
+
+    <div class="note">Both algorithms agree with the analytical answer above to at least 6 decimal places
+    for every point tested.</div>
+
+    <details class="code">
+      <summary>Show core algorithm code (Newton-Raphson &amp; Golden Section)</summary>
+<pre>def find_distance_newton(x0, y0, f, df, ddf, initial_guess=0.0,
+                          tolerance=1e-7, max_iter=100):
+    x = initial_guess
+    history = [x]
+    for _ in range(max_iter):
+        D_prime = 2 * (x - x0) + 2 * (f(x) - y0) * df(x)
+        D_double_prime = 2 + 2 * (df(x) ** 2) + 2 * (f(x) - y0) * ddf(x)
+        next_x = x - D_prime / D_double_prime
+        history.append(next_x)
+        if abs(next_x - x) < tolerance:
+            x = next_x
+            break
+        x = next_x
+    return dist(x, x0, y0, f), x, history
+
+
+def golden_section_search(x0, y0, f, a, b, tolerance=1e-7):
+    phi = (1 + math.sqrt(5)) / 2
+    resphi = 2 - phi
+    x1 = a + resphi * (b - a)
+    x2 = b - resphi * (b - a)
+    f_x1, f_x2 = distSQ(x1, x0, y0, f), distSQ(x2, x0, y0, f)
+    history = [(a, b)]
+    while abs(b - a) > tolerance:
+        if f_x1 < f_x2:
+            b, x2, f_x2 = x2, x1, f_x1
+            x1 = a + resphi * (b - a)
+            f_x1 = distSQ(x1, x0, y0, f)
+        else:
+            a, x1, f_x1 = x1, x2, f_x2
+            x2 = b - resphi * (b - a)
+            f_x2 = distSQ(x2, x0, y0, f)
+        history.append((a, b))
+    best_x = (a + b) / 2
+    return dist(best_x, x0, y0, f), best_x, history</pre>
+    </details>
+
+    <p>The five plots below each show three panels for one query point: the Newton-Raphson path on
+    the curve, the Golden Section brackets shrinking toward the minimum, and the objective D(x) itself
+    with both methods' progress marked. The equation and the point are labelled in each panel's legend.</p>
+
+    <div class="plot"><img src="./media/parabola_0.png" alt="Point (0,0) to y=x^2+5"></div>
+    <div class="plot"><img src="./media/parabola_-4.png" alt="Point (-4,0) to y=x^2+5"></div>
+    <div class="plot"><img src="./media/parabola_-8.png" alt="Point (-8,0) to y=x^2+5"></div>
+    <div class="plot"><img src="./media/parabola_2.png" alt="Point (2,0) to y=x^2+5"></div>
+    <div class="plot"><img src="./media/parabola_6.png" alt="Point (6,0) to y=x^2+5"></div>
+
+    <h3>Generalizing: other parabolas and points</h3>
+    <p>To confirm the routine isn't hardcoded to the assigned parabola, it's applied to
+    y = 2x² − 3x + 1 with the point (5, −2):</p>
+    <table>
+      <thead><tr><th>method</th><th>x*</th><th>distance</th></tr></thead>
+      <tbody>
+        <tr><td>Newton-Raphson</td><td>1.1768</td><td class="hero-num">4.4307</td></tr>
+        <tr><td>Golden Section</td><td>1.1768</td><td class="hero-num">4.4307</td></tr>
+      </tbody>
+    </table>
+    <div class="plot"><img src="./media/other_parabola.png" alt="Point (5,-2) to y=2x^2-3x+1"></div>
+
+    <h3>Non-polynomial functions</h3>
+    <p>A small change makes the routine work for any function: instead of supplying f' and f''
+    analytically, they're estimated with central differences. Golden Section needs no change at all,
+    since it never uses derivatives.</p>
+
+    <details class="code">
+      <summary>Show numerical-derivative wrapper</summary>
+<pre>class NumFunc:
+    """Wraps f(x) and produces f'(x), f''(x) via central differences."""
+    def __init__(self, f, h=1e-5):
+        self.f, self.h = f, h
+    def d1(self, x):
+        h = self.h
+        return (self.f(x + h) - self.f(x - h)) / (2 * h)
+    def d2(self, x):
+        h = self.h
+        return (self.f(x + h) - 2*self.f(x) + self.f(x - h)) / (h ** 2)
+
+# usage: pass nf.d1 / nf.d2 in place of an analytical df / ddf
+nf = NumFunc(f)
+d, x_star, _ = find_distance_newton(x0, y0, f, nf.d1, nf.d2, initial_guess=guess)</pre>
+    </details>
+
+    <table>
+      <thead><tr><th>function</th><th>point</th><th>x* (Newton)</th><th>x* (Golden)</th><th>distance</th></tr></thead>
+      <tbody>
+        <tr><td>y = eˣ</td><td>(3, 1)</td><td>0.7352</td><td>0.7352</td><td class="hero-num">2.5117</td></tr>
+        <tr><td>y = ln(x)</td><td>(5, −3)</td><td>3.8766</td><td>3.8766</td><td class="hero-num">4.4975</td></tr>
+        <tr><td>y = √x</td><td>(2, 6)</td><td>3.1818</td><td>3.1818</td><td class="hero-num">4.3787</td></tr>
+        <tr><td>y = 1/x</td><td>(4, −4)</td><td>4.2361</td><td>4.2361</td><td class="hero-num">4.2426</td></tr>
+      </tbody>
+    </table>
+
+    <div class="plot-grid">
+      <div class="plot"><img src="./media/exp.png" alt="exponential function distance"></div>
+      <div class="plot"><img src="./media/log.png" alt="logarithm function distance"></div>
+      <div class="plot"><img src="./media/sqrt.png" alt="square root function distance"></div>
+      <div class="plot"><img src="./media/recip.png" alt="reciprocal function distance"></div>
+    </div>
+
+    <p><span class="badge">source</span> Full Part 1 + Part 2 script:
+    <a href="./code/assignment1_solution.py">assignment1_solution.py</a></p>
+
+    <!-- ============================================================ -->
+    <!-- PART TWO -->
+    <!-- ============================================================ -->
+    <h2 id="part2">Part Two — Fitting a Line and a Parabola</h2>
+    <p>Fitting y = mx + b and y = ax² + bx + c to (0, 0.5), (2, 3.5), (1, 1.5), (3, 7.5) by
+    minimizing MSE(params) = (1/n)Σ(yᵢ − ŷᵢ)². Two optimization strategies are compared:
+    coordinate-wise cyclic optimization (fix all but one parameter, solve it exactly, move to the
+    next) and full multivariate Newton-Raphson (update every parameter at once using the gradient
+    and Hessian).</p>
+
+    <h3>Line fit — analytical (coordinate-wise)</h3>
+    <p>Setting ∂MSE/∂m = 0 and ∂MSE/∂b = 0 gives two closed forms, each depending on the other parameter:</p>
+    <div class="eq">m = (Σxᵢyᵢ − b·Σxᵢ) / Σxᵢ² &nbsp;&nbsp;&nbsp; b = (Σyᵢ − m·Σxᵢ) / n</div>
+    <p>Alternating them from b₀ = 0 converges geometrically toward the solution:</p>
+    <table>
+      <thead><tr><th>iteration</th><th>m</th><th>b</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>2.214286</td><td>−0.071429</td></tr>
+        <tr><td>2</td><td>2.244898</td><td>−0.117347</td></tr>
+        <tr><td>3</td><td>2.264577</td><td>−0.146866</td></tr>
+        <tr><td>…</td><td>…</td><td>…</td></tr>
+        <tr><td>converged</td><td class="hero-num">2.3000</td><td class="hero-num">−0.2000</td></tr>
+      </tbody>
+    </table>
+    <p>Solving both equations simultaneously gives the exact result directly:
+    m = 23/10 = 2.3, b = −1/5 = −0.2, with <strong>MSE = 23/40 = 0.575</strong>.</p>
+
+    <h3>Line fit — numerical (multivariate Newton-Raphson)</h3>
+    <p>Since MSE(m,b) is quadratic, its Hessian is constant — full Newton converges in exactly
+    <strong>one step</strong> from any starting point:</p>
+    <div class="eq">H = (2/n)[[Σx², Σx], [Σx, n]] = [[7, 3], [3, 2]], &nbsp; det(H) = 5</div>
+    <p>Starting from (m,b) = (0,0), the gradient is [−31/2, −13/2], and the single Newton
+    step lands exactly on (2.3, −0.2) — the same answer as the closed form, because the linear
+    system Newton solves <em>is</em> the normal equations, just reached by a different route.</p>
+
+    <div class="plot"><img src="./media/line_coord_descent.png" alt="line fit convergence and MSE vs iteration"></div>
+    <div class="plot"><img src="./media/line_param_path.png" alt="MSE contour with coordinate descent and Newton paths"></div>
+
+    <h3>Parabola fit — analytical</h3>
+    <p>The three normal equations from ∂MSE/∂a = ∂MSE/∂b = ∂MSE/∂c = 0:</p>
+    <div class="eq">98a + 36b + 14c = 83
+36a + 14b + 6c  = 31
+14a + 6b + 4c   = 13</div>
+    <p>Eliminating c (scaling the third equation to match c's coefficient in the others) reduces
+    this to a 2×2 system in a and b, which back-substitutes to the exact solution:</p>
+    <div class="eq result">y = 0.75x² + 0.05x + 0.55  &nbsp; (a = 3/4, b = 1/20, c = 11/20) &nbsp;&nbsp; MSE = 1/80 = 0.0125</div>
+
+    <h3>Parabola fit — numerical</h3>
+    <p>Coordinate-wise cycling through a → b → c converges toward this solution over ~15–20
+    iterations; full multivariate Newton reaches it in one step, for the same reason as the line fit
+    — the objective's Hessian is constant, so Newton's linear solve reproduces the normal equations.</p>
+
+    <div class="plot"><img src="./media/parabola_coord_descent.png" alt="parabola fit convergence and MSE vs iteration"></div>
+
+    <details class="code">
+      <summary>Show fitting code (coordinate descent &amp; multivariate Newton)</summary>
+<pre>def fit_line_coordinate_descent(xs, ys, m0=0.0, b0=0.0, n_iter=15):
+    xs, ys = np.asarray(xs, dtype=float), np.asarray(ys, dtype=float)
+    n = len(xs)
+    sx, sy = xs.sum(), ys.sum()
+    sx2, sxy = (xs**2).sum(), (xs*ys).sum()
+    xbar, ybar = sx/n, sy/n
+    m, b = m0, b0
+    history = [(m, b, mse_line(m, b, xs, ys))]
+    for _ in range(n_iter):
+        m = (sxy - b*sx) / sx2
+        b = ybar - m*xbar
+        history.append((m, b, mse_line(m, b, xs, ys)))
+    return m, b, history
+
+
+def fit_line_newton(xs, ys, m0=0.0, b0=0.0, n_iter=5):
+    xs, ys = np.asarray(xs, dtype=float), np.asarray(ys, dtype=float)
+    n = len(xs)
+    m, b = m0, b0
+    history = [(m, b, mse_line(m, b, xs, ys))]
+    for _ in range(n_iter):
+        resid = ys - (m*xs + b)
+        grad = np.array([-(2/n)*np.sum(xs*resid), -(2/n)*np.sum(resid)])
+        H = (2/n) * np.array([[np.sum(xs**2), np.sum(xs)], [np.sum(xs), n]])
+        step = np.linalg.solve(H, grad)
+        m, b = np.array([m, b]) - step
+        history.append((m, b, mse_line(m, b, xs, ys)))
+        if np.linalg.norm(step) < 1e-12:
+            break
+    return m, b, history</pre>
+    </details>
+
+    <p><span class="badge">source</span> Same file as Part 1:
+    <a href="./code/assignment1_solution.py">assignment1_solution.py</a></p>
+
+    <!-- ============================================================ -->
+    <!-- APPENDIX: HANDWRITTEN NOTES -->
+    <!-- ============================================================ -->
+    <h2 id="handwritten">Worked by Hand</h2>
+    <p>Original hand-worked derivations for both parts, shown in full for reference alongside the
+    typed versions above.</p>
+
+    <h3>Part 1 — Distance to y = x² + 5, all five points</h3>
+    <div class="scan">
+      <img src="./media/handwritten/part1_distance.png" alt="Hand-worked distance derivations for all five points">
+      <div class="cap">D(x) set up per point, D'(x) solved for x*, distance checked against f(x*).</div>
+    </div>
+
+    <h3>Part 2 — Fitting a line</h3>
+    <div class="scan">
+      <img src="./media/handwritten/part2_line_fit.png" alt="Hand-worked line fitting setup and coordinate descent iterations">
+      <div class="cap">MSE setup, partial derivatives, coordinate-descent iterations, and the exact closed form.</div>
+    </div>
+    <div class="scan">
+      <img src="./media/handwritten/part2_line_newton.png" alt="Hand-worked multivariate Newton-Raphson for the line fit">
+      <div class="cap">Multivariate Newton-Raphson: gradient, Hessian, and the one-step update from (0,0).</div>
+    </div>
+
+    <h3>Part 2 — Fitting a parabola</h3>
+    <div class="scan">
+      <img src="./media/handwritten/part2_parabola_fit.png" alt="Hand-worked parabola fitting: normal equations, elimination, and Newton-Raphson">
+      <div class="cap">Three-equation system, elimination to solve for a, b, c, and the equivalent Newton-Raphson update.</div>
+    </div>
+
+  </div>
+
+  <footer>SYDE 572 — Assignment 1</footer>
+</body>
+</html>
