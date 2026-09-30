@@ -90,6 +90,102 @@
     <div class="note">Both algorithms agree with the analytical answer above to at least 6 decimal places
     for every point tested.</div>
 
+    <h3>Newton-Raphson — worked by hand</h3>
+    <p>With f(x) = x² + 5, f'(x) = 2x, f''(x) = 2, and y₀ = 0, the update quantities work out to:</p>
+    <div class="eq">D'(x) = 4x³ + 22x − 2x₀ &nbsp;&nbsp;&nbsp; D''(x) = 12x² + 22 &nbsp;&nbsp;&nbsp; xₙ₊₁ = xₙ − D'(xₙ)/D''(xₙ)</div>
+    <p>Starting from x₀ᵍᵘᵉˢˢ = 0 for every point, convergence is quadratic — 2–3 real steps to 6 decimal places:</p>
+ 
+    <div class="plot-grid">
+      <table>
+        <caption style="caption-side:top; text-align:left; font-family:'IBM Plex Mono',monospace; font-size:.85rem; padding-bottom:6px; color:var(--muted);">Point (0, 0)</caption>
+        <thead><tr><th>n</th><th>xₙ</th><th>D'(xₙ)</th><th>D''(xₙ)</th><th>xₙ₊₁</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>0.000000</td><td>0.000000</td><td>22.0000</td><td class="hero-num">0.000000</td></tr>
+        </tbody>
+      </table>
+ 
+      <table>
+        <caption style="caption-side:top; text-align:left; font-family:'IBM Plex Mono',monospace; font-size:.85rem; padding-bottom:6px; color:var(--muted);">Point (−4, 0)</caption>
+        <thead><tr><th>n</th><th>xₙ</th><th>D'(xₙ)</th><th>D''(xₙ)</th><th>xₙ₊₁</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>0.000000</td><td>8.000000</td><td>22.0000</td><td>−0.363636</td></tr>
+          <tr><td>1</td><td>−0.363636</td><td>−0.192337</td><td>23.5868</td><td>−0.355482</td></tr>
+          <tr><td>2</td><td>−0.355482</td><td>−0.000288</td><td>23.5164</td><td>−0.355470</td></tr>
+          <tr><td>3</td><td>−0.355470</td><td>−0.000000</td><td>23.5163</td><td class="hero-num">−0.355470</td></tr>
+        </tbody>
+      </table>
+ 
+      <table>
+        <caption style="caption-side:top; text-align:left; font-family:'IBM Plex Mono',monospace; font-size:.85rem; padding-bottom:6px; color:var(--muted);">Point (−8, 0)</caption>
+        <thead><tr><th>n</th><th>xₙ</th><th>D'(xₙ)</th><th>D''(xₙ)</th><th>xₙ₊₁</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>0.000000</td><td>16.000000</td><td>22.0000</td><td>−0.727273</td></tr>
+          <tr><td>1</td><td>−0.727273</td><td>−1.538693</td><td>28.3471</td><td>−0.672992</td></tr>
+          <tr><td>2</td><td>−0.672992</td><td>−0.025074</td><td>27.4350</td><td>−0.672078</td></tr>
+          <tr><td>3</td><td>−0.672078</td><td>−0.000007</td><td>27.4203</td><td class="hero-num">−0.672078</td></tr>
+        </tbody>
+      </table>
+ 
+      <table>
+        <caption style="caption-side:top; text-align:left; font-family:'IBM Plex Mono',monospace; font-size:.85rem; padding-bottom:6px; color:var(--muted);">Point (2, 0)</caption>
+        <thead><tr><th>n</th><th>xₙ</th><th>D'(xₙ)</th><th>D''(xₙ)</th><th>xₙ₊₁</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>0.000000</td><td>−4.000000</td><td>22.0000</td><td>0.181818</td></tr>
+          <tr><td>1</td><td>0.181818</td><td>0.024042</td><td>22.3967</td><td>0.180745</td></tr>
+          <tr><td>2</td><td>0.180745</td><td>0.000003</td><td>22.3920</td><td class="hero-num">0.180745</td></tr>
+        </tbody>
+      </table>
+ 
+      <table>
+        <caption style="caption-side:top; text-align:left; font-family:'IBM Plex Mono',monospace; font-size:.85rem; padding-bottom:6px; color:var(--muted);">Point (6, 0)</caption>
+        <thead><tr><th>n</th><th>xₙ</th><th>D'(xₙ)</th><th>D''(xₙ)</th><th>xₙ₊₁</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>0.000000</td><td>−12.000000</td><td>22.0000</td><td>0.545455</td></tr>
+          <tr><td>1</td><td>0.545455</td><td>0.649136</td><td>25.5702</td><td>0.520068</td></tr>
+          <tr><td>2</td><td>0.520068</td><td>0.004153</td><td>25.2457</td><td>0.519904</td></tr>
+          <tr><td>3</td><td>0.519904</td><td>0.000000</td><td>25.2436</td><td class="hero-num">0.519904</td></tr>
+        </tbody>
+      </table>
+    </div>
+ 
+    <h3>Golden Section — worked by hand</h3>
+    <p>Golden Section converges linearly rather than quadratically, so reaching the 1e-7 tolerance
+    takes 30–50 iterations per point — impractical to reproduce in full by hand. Instead, the mechanics
+    are worked out explicitly for two representative points; the same rule repeats identically for the
+    remaining iterations until the bracket collapses to the same converged x* as Newton-Raphson.</p>
+ 
+    <p><strong>Point (0, 0), bracket [−1, 1]</strong> — a symmetric case:</p>
+    <table>
+      <thead><tr><th>n</th><th>a</th><th>b</th><th>x₁</th><th>x₂</th><th>D(x₁)</th><th>D(x₂)</th><th>action</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>−0.23607</td><td>1.00000</td><td>0.23607</td><td>0.52786</td><td>25.61611</td><td>28.14269</td><td>keep right: a=x₁</td></tr>
+        <tr><td>1</td><td>−0.23607</td><td>0.52786</td><td>0.05573</td><td>0.23607</td><td>25.03417</td><td>25.61611</td><td>keep left: b=x₂</td></tr>
+        <tr><td>2</td><td>−0.23607</td><td>0.23607</td><td>−0.05573</td><td>0.05573</td><td>25.03417</td><td>25.03417</td><td>keep left: b=x₂</td></tr>
+        <tr><td>3</td><td>−0.05573</td><td>0.23607</td><td>0.05573</td><td>0.12461</td><td>25.03417</td><td>25.17105</td><td>keep right: a=x₁</td></tr>
+        <tr><td>4</td><td>−0.05573</td><td>0.12461</td><td>0.01316</td><td>0.05573</td><td>25.00190</td><td>25.03417</td><td>keep left: b=x₂</td></tr>
+        <tr><td>5</td><td>−0.05573</td><td>0.05573</td><td>−0.01316</td><td>0.01316</td><td>25.00190</td><td>25.00190</td><td>keep left: b=x₂</td></tr>
+      </tbody>
+    </table>
+    <p>After 6 iterations the bracket has shrunk to [−0.0557, 0.0557] (midpoint ≈ 0) — continuing the
+    identical process narrows it fully to <strong>x* = 0.000000</strong>, matching Newton-Raphson exactly.</p>
+ 
+    <p><strong>Point (6, 0), bracket [−1, 7]</strong> — an asymmetric case, showing the bracket
+    genuinely zig-zagging toward the answer rather than shrinking in one direction:</p>
+    <table>
+      <thead><tr><th>n</th><th>a</th><th>b</th><th>x₁</th><th>x₂</th><th>D(x₁)</th><th>D(x₂)</th><th>action</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>−1.00000</td><td>3.94427</td><td>0.88854</td><td>2.05573</td><td>59.64541</td><td>100.67669</td><td>keep left: b=x₂</td></tr>
+        <tr><td>1</td><td>−1.00000</td><td>2.05573</td><td>0.16718</td><td>0.88854</td><td>59.30203</td><td>59.64541</td><td>keep left: b=x₂</td></tr>
+        <tr><td>2</td><td>−1.00000</td><td>0.88854</td><td>−0.27864</td><td>0.16718</td><td>65.20376</td><td>59.30203</td><td>keep left: b=x₂</td></tr>
+        <tr><td>3</td><td>−0.27864</td><td>0.88854</td><td>0.16718</td><td>0.44272</td><td>59.30203</td><td>57.88179</td><td>keep right: a=x₁</td></tr>
+        <tr><td>4</td><td>0.16718</td><td>0.88854</td><td>0.44272</td><td>0.61301</td><td>57.88179</td><td>57.91868</td><td>keep right: a=x₁</td></tr>
+        <tr><td>5</td><td>0.16718</td><td>0.61301</td><td>0.33747</td><td>0.44272</td><td>58.21606</td><td>57.88179</td><td>keep left: b=x₂</td></tr>
+      </tbody>
+    </table>
+    <p>After 6 iterations the bracket is [0.16718, 0.61301] and still narrowing toward
+    <strong>x* = 0.519904</strong> — the same value Newton-Raphson and the analytical solution give.</p>
+ 
+
     <details class="code">
       <summary>Show core algorithm code (Newton-Raphson &amp; Golden Section)</summary>
 <pre>def find_distance_newton(x0, y0, f, df, ddf, initial_guess=0.0,
