@@ -3,28 +3,262 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SYDE 572 Portfolio</title>
-<link rel="stylesheet" href="./style.css">
+<title>Assignment 2 — SYDE 572</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+  /* Small additions for this page only. Safe to delete any block your
+     main style.css already covers. */
+  .a2-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 1.2rem 0; }
+  .a2-grid figure { margin: 0; }
+  .a2-grid img { width: 100%; height: auto; }
+  @media (max-width: 720px) { .a2-grid { grid-template-columns: 1fr; } }
+  .a2-fig { margin: 1.2rem 0; }
+  .a2-fig img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+  .a2-fig figcaption, .a2-grid figcaption { font-size: 0.9rem; color: #5b6470; margin-top: 6px; text-align: center; }
+  table.a2-table { border-collapse: collapse; margin: 1rem 0; width: 100%; font-variant-numeric: tabular-nums; }
+  table.a2-table th, table.a2-table td { padding: 6px 10px; border-bottom: 1px solid #d9dde2; text-align: right; }
+  table.a2-table th:first-child, table.a2-table td:first-child { text-align: left; }
+  table.a2-table tr.hl td { font-weight: 600; background: rgba(15, 118, 110, 0.10); }
+  .a2-note { background: #f6f1e7; border-left: 4px solid #c58b1a; padding: 10px 14px; margin: 1rem 0; border-radius: 6px; }
+  .a2-table-wrap { overflow-x: auto; }
+  details.a2-code pre { overflow-x: auto; }
+</style>
 </head>
 <body>
   <div class="topbar">
     <div class="topbar-inner">
       <span class="brand">SYDE 572</span>
-      <nav><a href="./1/index.html">Assignment 1</a></nav>
+      <nav>
+        <a href="../index.html">Home</a>
+        <a href="#part1">Part 1</a>
+        <a href="#part2">Part 2</a>
+        <a href="#source">Source</a>
+      </nav>
     </div>
   </div>
 
   <div class="wrap">
     <div class="hero">
-      <div class="kicker">Course portfolio</div>
-      <h1>Pattern Recognition — Assignments</h1>
-      <p class="lede">Worked solutions, code, and results for SYDE 572 coursework.</p>
+      <div class="kicker">Assignment 2</div>
+      <h1>Linear Basis Function Regression</h1>
+      <p class="lede">Predicting Boston median house value with polynomial and Gaussian basis functions, regularization, and cross-validation.</p>
     </div>
 
-    <h2>Assignments</h2>
-    <ul>
-      <li><a href="./1/index.html">Assignment 1 — Distance to a function &amp; curve fitting</a></li>
-    </ul>
+    <h2>Setup</h2>
+    <p>
+      The data is the Boston Housing dataset (506 towns, 13 features, target = median house value in $1000s).
+      As required, the <strong>first 100 rows are the training set</strong> and the remaining <strong>406 rows are the test set</strong>.
+      Every feature is <strong>normalized</strong> using the training-set mean and standard deviation, and the test set is scaled with
+      those same training values. CHAS is 0 for all 100 training rows, so its standard deviation is 0; I set it to 1 to avoid dividing
+      by zero (that column simply stays 0). Models are scored with <strong>RMS error</strong>, and least-squares weights are computed
+      with the pseudo-inverse.
+    </p>
+    <div class="a2-note">
+      Normalization is separate from regularization: parts (a) and (b) use no regularization but are still normalized.
+      For plain least squares, normalizing does not change the best-fit curve, but it keeps the computation numerically accurate.
+    </div>
+
+    <!-- ===================================================== PART 1 -->
+    <h2 id="part1">Part 1 — Polynomial basis functions</h2>
+    <p>
+      Each feature <var>x</var> is expanded into <var>x, x², …, x<sup>d</sup></var> (plus one bias column), with no cross-terms between different features.
+    </p>
+
+    <h3>(a) Degrees 1 to 7, all 13 features, no regularization</h3>
+    <div class="a2-table-wrap">
+    <table class="a2-table">
+      <thead>
+        <tr><th>Degree</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Training RMS</td><td>2.04</td><td>1.58</td><td>1.45</td><td>1.27</td><td>1.10</td><td>1.07</td><td>0.88</td></tr>
+        <tr><td>Test RMS</td><td>36.4</td><td>1.10×10³</td><td>4.87×10⁴</td><td>9.82×10¹⁴</td><td>5.81×10¹⁴</td><td>1.14×10¹⁵</td><td>6.84×10¹⁵</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <figure class="a2-fig">
+      <img src="media/1a.png" alt="Training and test RMS error versus polynomial degree, log scale">
+      <figcaption>Training and test RMS error versus polynomial degree (log y-axis).</figcaption>
+    </figure>
+    <p>
+      <strong>Comment.</strong> Training error decreases steadily as the degree rises, because a more flexible model can bend toward the training points.
+      Test error does the opposite and explodes, from about 36 at degree 1 to around 10<sup>15</sup> from degree 4 onward, which is overfitting.
+      The effect is much more extreme than usual because the file is ordered by town: the first 100 towns have low crime (CRIM has a standard
+      deviation of 0.39 in training), while test towns reach crime rates near 89. Raising such out-of-range normalized values to the 4th to 7th power
+      gives enormous predictions, so the model is also extrapolating far outside what it saw in training.
+    </p>
+
+    <h3>(b) Degree 1 weights</h3>
+    <p>
+      Weights from the degree-1 fit on normalized features (bias <var>w</var><sub>0</sub>, then features 1 to 13 in dataset order):
+    </p>
+    <div class="a2-table-wrap">
+    <table class="a2-table">
+      <thead><tr><th>Weight</th><th>Feature</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>w<sub>0</sub></td><td>bias</td><td>22.3090</td></tr>
+        <tr><td>w<sub>1</sub></td><td>CRIM</td><td>−1.3380</td></tr>
+        <tr><td>w<sub>2</sub></td><td>ZN</td><td>0.1230</td></tr>
+        <tr><td>w<sub>3</sub></td><td>INDUS</td><td>−0.5311</td></tr>
+        <tr><td>w<sub>4</sub></td><td>CHAS</td><td>0.0000</td></tr>
+        <tr><td>w<sub>5</sub></td><td>NOX</td><td>1.0027</td></tr>
+        <tr class="hl"><td>w<sub>6</sub></td><td>RM (6th feature)</td><td>4.1956</td></tr>
+        <tr><td>w<sub>7</sub></td><td>AGE</td><td>−2.1663</td></tr>
+        <tr class="hl"><td>w<sub>8</sub></td><td>DIS (8th feature)</td><td>0.0107</td></tr>
+        <tr><td>w<sub>9</sub></td><td>RAD</td><td>−0.1938</td></tr>
+        <tr><td>w<sub>10</sub></td><td>TAX</td><td>−0.3486</td></tr>
+        <tr><td>w<sub>11</sub></td><td>PTRATIO</td><td>0.2613</td></tr>
+        <tr><td>w<sub>12</sub></td><td>B</td><td>0.1811</td></tr>
+        <tr><td>w<sub>13</sub></td><td>LSTAT</td><td>0.1488</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>
+      <strong>Comment.</strong> The weight on the 6th feature (average rooms per dwelling, RM) is <strong>4.20</strong>. It is large and positive,
+      which is reasonable: homes with more rooms are more valuable, and in the original units this is about +$8,600 per additional room.
+      The weight on the 8th feature (weighted distance to the five Boston employment centres, DIS) is only <strong>0.011</strong>, essentially zero.
+      That is more surprising, since distance to jobs would normally be expected to matter. A plausible explanation is that DIS is strongly correlated with other features
+      such as NOX and AGE, so the fit gives the credit to those instead, and with only 100 training points the individual weights of correlated features are not well determined.
+      (CHAS has weight 0 because it is constant in the training set.)
+    </p>
+
+    <h3>(c) One feature (ZN), polynomial fits</h3>
+    <p>Using only the 2nd feature (ZN), normalized, with polynomial degrees 1, 3 and 8.</p>
+    <div class="a2-grid">
+      <figure>
+        <img src="media/1c_degree_1.png" alt="Degree 1 polynomial fit to ZN">
+        <figcaption>Degree 1</figcaption>
+      </figure>
+      <figure>
+        <img src="media/1c_degree_3.png" alt="Degree 3 polynomial fit to ZN">
+        <figcaption>Degree 3</figcaption>
+      </figure>
+      <figure>
+        <img src="media/1c_degree_8.png" alt="Degree 8 polynomial fit to ZN">
+        <figcaption>Degree 8</figcaption>
+      </figure>
+    </div>
+    <p>
+      <strong>Comment.</strong> Degree 1 is nearly a flat line, and degree 3 is a gentle curve that follows the rough upward trend in the training data; both are smooth and stay close to the data.
+      At degree 8 the curve fits the training points tightly but swings wildly between them, dipping below 0 near the left edge and peaking above 100 in a region with almost no training data (the test points there sit around 20 to 40).
+      Many towns have ZN = 0 (63 of the 100 training points), so there is very little information to constrain a high-order curve: it is a clear case of overfitting.
+    </p>
+
+    <h3>(d) Ridge regression, degree 8 on ZN, 10-fold cross-validation</h3>
+    <div class="a2-table-wrap">
+    <table class="a2-table">
+      <thead><tr><th>λ</th><th>0</th><th>0.01</th><th>0.1</th><th>1</th><th>10</th><th>100</th><th>1000</th></tr></thead>
+      <tbody>
+        <tr><td>Avg. validation RMS</td><td>10.78</td><td>6.35</td><td>8.74</td><td>9.44</td><td>9.73</td><td>8.48</td><td>6.41</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <figure class="a2-fig">
+      <img src="media/1d.png" alt="Average validation RMS versus lambda, semilog x-axis">
+      <figcaption>Average 10-fold validation RMS versus λ (λ = 0 reported separately: 10.78).</figcaption>
+    </figure>
+    <p>
+      <strong>Choice of λ.</strong> The lowest average validation error is at <strong>λ = 0.01</strong> (6.35), narrowly ahead of λ = 1000 (6.41).
+      Both are clearly better than no regularization (10.78). The curve is bumpy, and when I repeated the cross-validation with 20 different random fold splits,
+      λ = 1000 won 14 times, λ = 100 won 3, λ = 0.01 won 2 and λ = 0 won 1 (median validation RMS: 6.6 for λ = 1000 versus 7.6 for λ = 0.01).
+      With only 100 points, and most of them having ZN = 0, the selection is noisy, so I would choose λ = 0.01 for the specific split used here while noting that λ = 1000 is
+      equally defensible and more consistent across shuffles.
+    </p>
+
+    <!-- ===================================================== PART 2 -->
+    <h2 id="part2">Part 2 — Gaussian basis functions</h2>
+    <p>
+      Each basis function is a Gaussian bump centred on a randomly chosen training point <var>c</var>:
+    </p>
+    <div class="equation">φ(x) = exp( −‖x − c‖² / (2σ²) )</div>
+    <p>
+      It is close to 1 for towns similar to its centre and falls toward 0 for towns far away. A bias column is added, and all 13 normalized features are used.
+      The assignment does not fix the width, so I used <strong>σ = 4.63</strong>, the median distance between pairs of normalized training points (a typical spacing of the data).
+    </p>
+
+    <h3>(e) K = 5, 15, …, 95 basis functions, no regularization</h3>
+    <div class="a2-table-wrap">
+    <table class="a2-table">
+      <thead><tr><th>K</th><th>5</th><th>15</th><th>25</th><th>35</th><th>45</th><th>55</th><th>65</th><th>75</th><th>85</th><th>95</th></tr></thead>
+      <tbody>
+        <tr><td>Training RMS</td><td>2.63</td><td>2.04</td><td>1.83</td><td>1.39</td><td>1.32</td><td>1.20</td><td>0.88</td><td>0.67</td><td>0.55</td><td>0.23</td></tr>
+        <tr><td>Test RMS</td><td>7.82</td><td>8.06</td><td>7.80</td><td>8.66</td><td>13.07</td><td>13.38</td><td>19.03</td><td>22.13</td><td>44.16</td><td>36.54</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <figure class="a2-fig">
+      <img src="media/2e.png" alt="Training and test RMS versus number of Gaussian basis functions">
+      <figcaption>Training and test RMS error versus the number of basis functions K.</figcaption>
+    </figure>
+    <p>
+      <strong>Comment.</strong> Training error falls steadily from 2.6 to 0.23 as K grows, since more bumps give the model more freedom.
+      Test error stays around 8 up to about K = 35, then rises to 13, 22 and 44 as K approaches the 100 training points, where the model is nearly one bump per training town and is memorizing.
+      For reference, always predicting the training-set mean gives a test RMS of 9.83, so the model beats that baseline at small K and does much worse than it at large K.
+      The exact test values depend on which points happen to be chosen as centres; repeating the experiment with 20 random permutations shows the same pattern (test error roughly flat, then rising steeply),
+      with a wide spread at large K.
+    </p>
+    <figure class="a2-fig">
+      <img src="media/2e_robust.png" alt="Median training and test RMS over 20 random choices of centres, log scale">
+      <figcaption>Robustness check: median over 20 random permutations of the centres (shaded band = 25th to 75th percentile of test error).</figcaption>
+    </figure>
+
+    <h3>(f) K = 90, ridge regression, 10-fold cross-validation</h3>
+    <div class="a2-table-wrap">
+    <table class="a2-table">
+      <thead><tr><th>λ</th><th>0</th><th>0.01</th><th>0.1</th><th>1</th><th>10</th><th>100</th><th>1000</th></tr></thead>
+      <tbody>
+        <tr><td>Avg. validation RMS</td><td>87.56</td><td>1.79</td><td>1.93</td><td>2.49</td><td>3.15</td><td>4.36</td><td>5.50</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <figure class="a2-fig">
+      <img src="media/2f.png" alt="Average validation RMS versus lambda for Gaussian basis, semilog x-axis, log y-axis">
+      <figcaption>Average 10-fold validation RMS versus λ for K = 90 (λ = 0 shown as the dashed baseline; y-axis is logarithmic).</figcaption>
+    </figure>
+    <p>
+      <strong>Choice of λ.</strong> I would choose <strong>λ = 0.01</strong>, which has the lowest average validation error (1.79).
+      Regularization matters a great deal here: with no penalty and 90 basis functions for roughly 90 training rows per fold, the unregularized fit is wildly overfit (validation RMS 87.6).
+      Validation error then rises steadily as λ grows, because a large penalty makes the model too stiff. Unlike part (d), this choice is stable: λ = 0.01 was the best value in all 20 repeated random fold splits.
+      Note that these validation errors (about 1.8) are much smaller than the test errors in part (e) (about 8), because cross-validation shuffles the same 100 training towns, so each validation town has similar neighbours in the training folds,
+      while the test towns come from other parts of the dataset.
+    </p>
+
+    <!-- ===================================================== CODE -->
+    <h2 id="source">Code</h2>
+    <details class="a2-code">
+      <summary>Polynomial basis and RMS error</summary>
+<pre><code>def polynomial_basis(X, degree):
+    n_samples, n_features = X.shape
+    columns = [np.ones(n_samples)]          # bias term
+    for j in range(n_features):
+        for power in range(1, degree + 1):
+            columns.append(X[:, j] ** power)
+    return np.column_stack(columns)
+
+def rms_error(y_true, y_pred):
+    return np.sqrt(np.mean((y_true - y_pred) ** 2))
+
+# least-squares weights via the pseudo-inverse
+weights = np.linalg.pinv(Phi_train) @ y_train</code></pre>
+    </details>
+    <details class="a2-code">
+      <summary>Gaussian basis</summary>
+<pre><code>def gaussian_basis(Z, centers, sigma):
+    sq_dist = ((Z[:, None, :] - centers[None, :, :]) ** 2).sum(axis=2)
+    return np.column_stack([np.ones(len(Z)), np.exp(-sq_dist / (2 * sigma ** 2))])</code></pre>
+    </details>
+    <details class="a2-code">
+      <summary>Ridge regression (bias not penalized)</summary>
+<pre><code>def ridge_fit(Phi, t, lam):
+    n_cols = Phi.shape[1]
+    R = np.eye(n_cols)
+    R[0, 0] = 0                              # do not penalize the bias
+    A = np.vstack([Phi, np.sqrt(lam) * R])
+    b = np.concatenate([t, np.zeros(n_cols)])
+    return np.linalg.lstsq(A, b, rcond=None)[0]</code></pre>
+    </details>
+
+    <p>Full script: <a href="SYDE_572_A2.py">SYDE_572_A2.py</a></p>
   </div>
 
   <footer>Built for SYDE 572.</footer>
