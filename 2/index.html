@@ -53,10 +53,6 @@
       by zero (that column simply stays 0). Models are scored with <strong>RMS error</strong>, and least-squares weights are computed
       with the pseudo-inverse.
     </p>
-    <div class="a2-note">
-      Normalization is separate from regularization: parts (a) and (b) use no regularization but are still normalized.
-      For plain least squares, normalizing does not change the best-fit curve, but it keeps the computation numerically accurate.
-    </div>
 
     <!-- ===================================================== PART 1 -->
     <h2 id="part1">Part 1 — Polynomial basis functions</h2>
@@ -159,9 +155,7 @@
     </figure>
     <p>
       <strong>Choice of λ.</strong> The lowest average validation error is at <strong>λ = 0.01</strong> (6.35), narrowly ahead of λ = 1000 (6.41).
-      Both are clearly better than no regularization (10.78). The curve is bumpy, and when I repeated the cross-validation with 20 different random fold splits,
-      λ = 1000 won 14 times, λ = 100 won 3, λ = 0.01 won 2 and λ = 0 won 1 (median validation RMS: 6.6 for λ = 1000 versus 7.6 for λ = 0.01).
-      With only 100 points, and most of them having ZN = 0, the selection is noisy, so I would choose λ = 0.01 for the specific split used here while noting that λ = 1000 is
+      Both are clearly better than no regularization (10.78). With only 100 points, and most of them having ZN = 0, the selection is noisy, so I would choose λ = 0.01 for the specific split used here while noting that λ = 1000 is
       equally defensible and more consistent across shuffles.
     </p>
 
@@ -218,8 +212,7 @@
     <p>
       <strong>Choice of λ.</strong> I would choose <strong>λ = 0.01</strong>, which has the lowest average validation error (1.79).
       Regularization matters a great deal here: with no penalty and 90 basis functions for roughly 90 training rows per fold, the unregularized fit is wildly overfit (validation RMS 87.6).
-      Validation error then rises steadily as λ grows, because a large penalty makes the model too stiff. Unlike part (d), this choice is stable: λ = 0.01 was the best value in all 20 repeated random fold splits.
-      Note that these validation errors (about 1.8) are much smaller than the test errors in part (e) (about 8), because cross-validation shuffles the same 100 training towns, so each validation town has similar neighbours in the training folds,
+      Validation error then rises steadily as λ grows, because a large penalty makes the model too stiff. Note that these validation errors (about 1.8) are much smaller than the test errors in part (e) (about 8), because cross-validation shuffles the same 100 training towns, so each validation town has similar neighbours in the training folds,
       while the test towns come from other parts of the dataset.
     </p>
 

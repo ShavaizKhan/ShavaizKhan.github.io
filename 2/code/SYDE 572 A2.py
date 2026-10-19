@@ -126,7 +126,7 @@ print(f"\nWeight on RM  (column {rm_idx}, {feature_names[rm_idx]}):  "
 print(f"Weight on DIS (column {dis_idx}, {feature_names[dis_idx]}): "
       f"{weights_b[1 + dis_idx]:.4f}")
 
-# Same weights converted back to the ORIGINAL units ($1000 per unit of feature)
+# Same weights converted back to the original units ($1000 per unit of feature)
 # w_orig = w_normalized / std. Handy for interpreting the weights.
 print("\nPart B: weights in original units (per 1 unit of each raw feature)")
 for name, w, s in zip(feature_names, weights_b[1:], x_std):
@@ -304,47 +304,17 @@ plt.tight_layout()
 plt.savefig("2/media/1d.png", dpi=150)
 plt.show()
 
-# Report unregularized result separately (lambda = 0)
+# Reporting unregularized result separately (lambda = 0)
 print(
     f"Unregularized baseline (lambda = 0): "
     f"Average validation RMS = {cv_errors_d[0]:.4f}"
 )
 
-# Robustness check :
-# Repeat 10-fold CV with 20 different shuffles and see which lambda wins most often.
-
-def cv_curve(seed):
-    rng = np.random.RandomState(seed)
-    folds = np.array_split(rng.permutation(len(y_d)), n_folds)
-    curve = []
-    for lam in lambdas_d:
-        errs = []
-        for k in range(n_folds):
-            val = folds[k]
-            tr = np.concatenate([folds[i] for i in range(n_folds) if i != k])
-            pen = np.eye(Phi_d.shape[1])
-            pen[0, 0] = 0
-            w = np.linalg.pinv(
-                Phi_d[tr].T @ Phi_d[tr] + lam * pen
-            ) @ Phi_d[tr].T @ y_d[tr]
-            errs.append(rms_error(y_d[val], Phi_d[val] @ w))
-        curve.append(np.mean(errs))
-    return np.array(curve)
-
-all_curves = np.array([cv_curve(s) for s in range(20)])
-winners = [lambdas_d[i] for i in np.argmin(all_curves, axis=1)]
-median_curve = np.median(all_curves, axis=0)
-
-print("\nRepeated CV over 20 different shuffles:")
-for lam in lambdas_d:
-    print(f"  lambda = {lam:7g}: won {winners.count(lam):2d} / 20 shuffles, "
-          f"median validation RMS = {median_curve[lambdas_d.index(lam)]:.4f}")
 
 #  PART 2: Gaussian basis function regression (all 13 features)
  
 # Gaussian basis function centred on a training point c_k:
 #     phi_k(x) = exp( -||x - c_k||^2 / (2 * sigma^2) )
-# It is ~1 when x is close to c_k and falls toward 0 as x moves away.
 # A bias column of 1s is added as the first column of the design matrix.
 def gaussian_basis(Z, centers, sigma):
     # squared distance from every row of Z to every centre -> (n_samples, K)
@@ -485,13 +455,3 @@ plt.grid(True)
 plt.tight_layout()
 plt.savefig("2/media/2f.png", dpi=150)
 plt.show()
- 
-# Robustness check: repeat CV with 20 different fold shuffles
-all_curves_f = np.array([gaussian_cv_curve(s) for s in range(20)])
-winners_f = [lambdas_d[i] for i in np.argmin(all_curves_f, axis=1)]
-median_curve_f = np.median(all_curves_f, axis=0)
- 
-print("\nRepeated CV over 20 different shuffles:")
-for lam, med in zip(lambdas_d, median_curve_f):
-    print(f"  lambda = {lam:7g}: won {winners_f.count(lam):2d} / 20 shuffles, "
-          f"median validation RMS = {med:.4f}")
