@@ -22,6 +22,10 @@
   .a2-note { background: #f6f1e7; border-left: 4px solid #c58b1a; padding: 10px 14px; margin: 1rem 0; border-radius: 6px; }
   .a2-table-wrap { overflow-x: auto; }
   details.a2-code pre { overflow-x: auto; }
+  .a2-method { background: #f4f6f8; border-left: 4px solid #0f766e; padding: 12px 16px; margin: 1rem 0; border-radius: 6px; }
+  .a2-method h4 { margin: 0 0 6px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: #0f766e; }
+  .a2-method pre { margin: 8px 0; white-space: pre-wrap; overflow-x: auto; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9rem; line-height: 1.5; }
+  .a2-method p { margin: 6px 0; font-size: 0.95rem; }
 </style>
 </head>
 <body>
@@ -53,7 +57,17 @@
       by zero (that column simply stays 0). Models are scored with <strong>RMS error</strong>, and least-squares weights are computed
       with the pseudo-inverse.
     </p>
-
+    <div class="a2-method">
+      <h4>Method: shared steps</h4>
+<pre>Normalization (feature j, training rows only):
+  x̃ = (x − μ_j) / σ_j      (σ_j set to 1 if it is 0, e.g. CHAS)</pre>
+<pre>RMS error over N points:
+  RMS = sqrt( (1/N) · Σ_n ( y_n − ŷ_n )² )</pre>
+<pre>Least squares for the model ŷ = Φw:
+  E(w) = ‖y − Φw‖²
+  ∇E = −2 Φᵀ(y − Φw) = 0   →   ΦᵀΦ w = Φᵀ y   →   w = (ΦᵀΦ)⁻¹ Φᵀ y = Φ⁺ y</pre>
+      <p>Φ has one row per town and one column per basis function; Φ⁺ is the pseudo-inverse (<code>np.linalg.pinv</code>).</p>
+    </div>
     <!-- ===================================================== PART 1 -->
     <h2 id="part1">Part 1 — Polynomial basis functions</h2>
     <p>
@@ -61,6 +75,12 @@
     </p>
 
     <h3>(a) Degrees 1 to 7, all 13 features, no regularization</h3>
+    <div class="a2-method">
+      <h4>Method</h4>
+<pre>φ(x) = [ 1, x̃₁, x̃₁², …, x̃₁^d,  x̃₂, …, x̃₂^d,  …,  x̃₁₃, …, x̃₁₃^d ]     (no cross-terms)
+ŷ(x) = wᵀφ(x) = w₀ + Σ_j Σ_{p=1..d} w_{j,p} · x̃_j^p        (M = 1 + 13d weights)
+w = Φ⁺ y   (training rows only);   RMS computed on training and test rows separately</pre>
+    </div>
     <div class="a2-table-wrap">
     <table class="a2-table">
       <thead>
@@ -85,6 +105,12 @@
     </p>
 
     <h3>(b) Degree 1 weights</h3>
+    <div class="a2-method">
+      <h4>Method</h4>
+<pre>d = 1 (M = 14):   ŷ = w₀ + w₁x̃₁ + w₂x̃₂ + … + w₁₃x̃₁₃</pre>
+<pre>Weight in original units:   w_j(original) = w_j / σ_j
+  RM (6th feature):  4.1956 / 0.4884 ≈ 8.59  ($1000 per room)</pre>
+    </div>
     <p>
       Weights from the degree-1 fit on normalized features (bias <var>w</var><sub>0</sub>, then features 1 to 13 in dataset order):
     </p>
@@ -119,6 +145,13 @@
     </p>
 
     <h3>(c) One feature (ZN), polynomial fits</h3>
+    <div class="a2-method">
+      <h4>Method</h4>
+<pre>z = normalized ZN
+φ(z) = [1, z, z², …, z^d]
+ŷ(z) = w₀ + w₁z + w₂z² + … + w_d z^d          (d = 1, 3, 8)
+Plotted curve: ŷ(z) evaluated at 300 evenly spaced z between the smallest and largest value</pre>
+    </div>
     <p>Using only the 2nd feature (ZN), normalized, with polynomial degrees 1, 3 and 8.</p>
     <div class="a2-grid">
       <figure>
@@ -141,6 +174,18 @@
     </p>
 
     <h3>(d) Ridge regression, degree 8 on ZN, 10-fold cross-validation</h3>
+        <div class="a2-method">
+      <h4>Method</h4>
+<pre>Ridge objective (degree 8, M = 9, bias not penalized):
+  E_ridge(w) = ‖y − Φw‖² + λ Σ_{k≥1} w_k²
+  ∇E_ridge = 0   →   (ΦᵀΦ + λR) w = Φᵀ y   →   w = (ΦᵀΦ + λR)⁻¹ Φᵀ y
+  R = diag(0, 1, 1, …, 1)</pre>
+<pre>10-fold cross-validation:
+  1. shuffle the 100 training indices, split into 10 folds of 10
+  2. for each λ and fold k: fit w on the other 9 folds, e_k(λ) = RMS on fold k
+  3. CV(λ) = (1/10) Σ_{k=1..10} e_k(λ)
+  4. λ* = argmin CV(λ)</pre>
+    </div>
     <div class="a2-table-wrap">
     <table class="a2-table">
       <thead><tr><th>λ</th><th>0</th><th>0.01</th><th>0.1</th><th>1</th><th>10</th><th>100</th><th>1000</th></tr></thead>
@@ -171,6 +216,15 @@
     </p>
 
     <h3>(e) K = 5, 15, …, 95 basis functions, no regularization</h3>
+    <div class="a2-method">
+      <h4>Method</h4>
+<pre>Gaussian basis function (centre c_k, width σ):
+  φ_k(x) = exp( −‖x − c_k‖² / (2σ²) ),     ‖x − c_k‖² = Σ_{j=1..13} ( x̃_j − c_{k,j} )²
+  ŷ(x) = w₀ + Σ_{k=1..K} w_k φ_k(x)               Φ is N × (K+1)</pre>
+<pre>Centres: first K points of one random permutation of the training towns (K = 5, 15, …, 95)
+Width:   σ = median over pairs (a, b) of ‖x̃_a − x̃_b‖ ≈ 4.62
+Weights: w = Φ⁺ y (no regularization)</pre>
+    </div>
     <div class="a2-table-wrap">
     <table class="a2-table">
       <thead><tr><th>K</th><th>5</th><th>15</th><th>25</th><th>35</th><th>45</th><th>55</th><th>65</th><th>75</th><th>85</th><th>95</th></tr></thead>
@@ -197,6 +251,13 @@
     </figure>
 
     <h3>(f) K = 90, ridge regression, 10-fold cross-validation</h3>
+    <div class="a2-method">
+      <h4>Method</h4>
+<pre>K = 90 (M = 91). Same ridge solution and cross-validation as part (d):
+  w = (ΦᵀΦ + λR)⁻¹ Φᵀ y,        CV(λ) = (1/10) Σ_{k=1..10} e_k(λ)</pre>
+<pre>Equivalent stacked least-squares form used in the code (more accurate when Φ is nearly singular):
+  minimize ‖ [ Φ ; √λ·R ] w − [ y ; 0 ] ‖²</pre>
+    </div>  
     <div class="a2-table-wrap">
     <table class="a2-table">
       <thead><tr><th>λ</th><th>0</th><th>0.01</th><th>0.1</th><th>1</th><th>10</th><th>100</th><th>1000</th></tr></thead>
