@@ -261,7 +261,7 @@ Weights: w = Φ⁺ y (no regularization)</pre>
     <table class="a2-table">
       <thead><tr><th>λ</th><th>0</th><th>0.01</th><th>0.1</th><th>1</th><th>10</th><th>100</th><th>1000</th></tr></thead>
       <tbody>
-        <tr><td>Avg. validation RMS</td><td>87.56</td><td>1.79</td><td>1.93</td><td>2.49</td><td>3.15</td><td>4.36</td><td>5.50</td></tr>
+        <tr><td>Avg. validation RMS</td><td>10.62</td><td>1.81</td><td>2.07</td><td>2.60</td><td>3.25</td><td>4.43</td><td>5.52</td></tr>
       </tbody>
     </table>
     </div>
@@ -270,10 +270,7 @@ Weights: w = Φ⁺ y (no regularization)</pre>
       <figcaption>Average 10-fold validation RMS versus λ for K = 90 (λ = 0 shown as the dashed baseline; y-axis is logarithmic).</figcaption>
     </figure>
     <p>
-      <strong>Choice of λ.</strong> I would choose <strong>λ = 0.01</strong>, which has the lowest average validation error (1.79).
-      Regularization matters a great deal here: with no penalty and 90 basis functions for roughly 90 training rows per fold, the unregularized fit is wildly overfit (validation RMS 87.6).
-      Validation error then rises steadily as λ grows, because a large penalty makes the model too stiff. Note that these validation errors (about 1.8) are much smaller than the test errors in part (e) (about 8), because cross-validation shuffles the same 100 training towns, so each validation town has similar neighbours in the training folds,
-      while the test towns come from other parts of the dataset.
+      <strong>Choice of λ.</strong> I would choose <strong>λ = 0.01</strong>, which has the lowest average validation RMS error (1.8161). Regularization matters a great deal here: with no penalty and 90 basis functions, the unregularized model has a much higher validation RMS error (10.6235), indicating substantial overfitting. Introducing a small penalty significantly improves generalization, while validation error rises as λ increases beyond 0.01, suggesting that stronger regularization increasingly restricts the model's flexibility. Note that these validation errors (about 1.8) are much smaller than the test errors in Part (e) (approximately 8 for some of the better-performing models). One possible explanation is that cross-validation randomly splits the first 100 towns, allowing validation samples to have similar nearby samples in the training folds, whereas the test set consists of the remaining towns in the dataset. This difference in data distribution can make cross-validation error lower than test error.
     </p>
 
     <!-- ===================================================== CODE -->

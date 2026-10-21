@@ -417,19 +417,66 @@ def ridge_fit(Phi, t, lam):
     b = np.concatenate([t, np.zeros(n_cols)])
     return np.linalg.lstsq(A, b, rcond=None)[0]
  
+
 def gaussian_cv_curve(seed):
     rng = np.random.RandomState(seed)
-    folds = np.array_split(rng.permutation(len(y_train)), n_folds)
+    folds = np.array_split(
+        rng.permutation(len(y_train)), n_folds
+    )
     curve = []
+
     for lam in lambdas_d:
         fold_errors = []
+
         for k in range(n_folds):
             val_idx = folds[k]
-            tr_idx = np.concatenate([folds[i] for i in range(n_folds) if i != k])
-            w = ridge_fit(Phi_f[tr_idx], y_train[tr_idx], lam)
-            fold_errors.append(rms_error(y_train[val_idx], Phi_f[val_idx] @ w))
+            tr_idx = np.concatenate([
+                folds[i]
+                for i in range(n_folds)
+                if i != k
+            ])
+
+            # Use only this fold's training samples
+            X_fold_tr = X_train_n[tr_idx]
+            X_fold_val = X_train_n[val_idx]
+            y_fold_tr = y_train[tr_idx]
+            y_fold_val = y_train[val_idx]
+
+            # Select 90 centers from the fold's training data.
+            # Each fold has 90 training samples.
+            centers = X_fold_tr
+
+            # Estimate sigma using only training-fold samples
+            diffs = (
+                X_fold_tr[:, None, :] -
+                X_fold_tr[None, :, :]
+            )
+            distances = np.sqrt(
+                (diffs ** 2).sum(axis=2)
+            )
+            sigma_fold = np.median(
+                distances[
+                    np.triu_indices(len(X_fold_tr), k=1)
+                ]
+            )
+
+            Phi_tr = gaussian_basis(
+                X_fold_tr, centers, sigma_fold
+            )
+            Phi_val = gaussian_basis(
+                X_fold_val, centers, sigma_fold
+            )
+
+            w = ridge_fit(Phi_tr, y_fold_tr, lam)
+
+            fold_errors.append(
+                rms_error(y_fold_val, Phi_val @ w)
+            )
+
         curve.append(np.mean(fold_errors))
+
     return np.array(curve)
+
  
 cv_errors_f = gaussian_cv_curve(42)
  
