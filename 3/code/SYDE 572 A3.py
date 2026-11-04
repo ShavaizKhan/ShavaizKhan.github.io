@@ -26,7 +26,7 @@ ax2.set(xlabel='Petal length (cm)', ylabel='Petal width (cm)', title='2D: Origin
 ax3.set(xlabel='Petal length', ylabel='Petal width', zlabel='Sepal length', title='3D: Original features')
 fig.legend(loc='upper center', ncol=3, bbox_to_anchor=(0.5, 1.04))
 fig.tight_layout()
-fig.savefig('part2_features.png', dpi=200, bbox_inches='tight')
+fig.savefig('3/media/part2_features.png', dpi=200, bbox_inches='tight')
 
 # Parts 3 and 4: PCA on centered, unstandardized Iris features
 pca = PCA(n_components=4)
@@ -52,7 +52,7 @@ ax2.set(xlabel='PC1', ylabel='PC2', title='2D PCA')
 ax3.set(xlabel='PC1', ylabel='PC2', zlabel='PC3', title='3D PCA')
 fig.legend(loc='upper center', ncol=3, bbox_to_anchor=(0.5, 1.04))
 fig.tight_layout()
-fig.savefig('part3_pca.png', dpi=200, bbox_inches='tight')
+fig.savefig('3/media/part3_pca.png', dpi=200, bbox_inches='tight')
 
 # Part 5: Isomap using exactly 3 nearest neighbors
 isomap = Isomap(n_neighbors=3, n_components=2)
@@ -66,7 +66,7 @@ axes[0].set(xlabel='PC1', ylabel='PC2', title='PCA (2D)')
 axes[1].set(xlabel='Isomap 1', ylabel='Isomap 2', title='Isomap (3 neighbors)')
 fig.legend(loc='upper center', ncol=3, bbox_to_anchor=(0.5, 1.05))
 fig.tight_layout()
-fig.savefig('part5_isomap_vs_pca.png', dpi=200, bbox_inches='tight')
+fig.savefig('3/media/part5_isomap_vs_pca.png', dpi=200, bbox_inches='tight')
 print(f'PCA 2D silhouette score (species labels): {silhouette_score(X_pca[:, :2], y):.4f}')
 print(f'Isomap 2D silhouette score (species labels): {silhouette_score(X_isomap, y):.4f}')
 plt.show()
