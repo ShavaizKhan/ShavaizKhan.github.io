@@ -1,27 +1,32 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import load_iris
+from ucimlrepo import fetch_ucirepo
 from sklearn.decomposition import PCA
 from sklearn.manifold import Isomap
 from sklearn.metrics import silhouette_score
 
-iris = load_iris()
-X, y = iris.data, iris.target
-names = iris.target_names
-colours = ['tab:blue', 'tab:orange', 'tab:green']
+# UCI Machine Learning Repository: Iris (dataset ID 53)
+iris = fetch_ucirepo(id=53)
+X = iris.data.features.to_numpy(dtype=float)
+y = iris.data.targets.iloc[:, 0].to_numpy()
+names = np.unique(y)
+print('Feature order:', iris.data.features.columns.tolist())
+print('Dataset shape:', X.shape)
+print('Species:', names)
+colors = ['tab:blue', 'tab:orange', 'tab:green']
 
 # Part 2: Original feature projections
 fig = plt.figure(figsize=(16, 4.5))
 ax1 = fig.add_subplot(131)
 ax2 = fig.add_subplot(132)
 ax3 = fig.add_subplot(133, projection='3d')
-for i in range(3):
-    mask = y == i
-    ax1.scatter(X[mask, 2], np.full(mask.sum(), i), color=colours[i], alpha=0.7, label=names[i])
-    ax2.scatter(X[mask, 2], X[mask, 3], color=colours[i], alpha=0.7)
-    ax3.scatter(X[mask, 2], X[mask, 3], X[mask, 0], color=colours[i], alpha=0.7)
+for i, species in enumerate(names):
+    mask = y == species
+    ax1.scatter(X[mask, 2], np.full(mask.sum(), i), color=colors[i], alpha=0.7, label=species)
+    ax2.scatter(X[mask, 2], X[mask, 3], color=colors[i], alpha=0.7)
+    ax3.scatter(X[mask, 2], X[mask, 3], X[mask, 0], color=colors[i], alpha=0.7)
 ax1.set(xlabel='Petal length (cm)', ylabel='Species (display only)', title='1D: Petal length')
-ax1.set_yticks(range(3), names)
+ax1.set_yticks(range(len(names)), names)
 ax2.set(xlabel='Petal length (cm)', ylabel='Petal width (cm)', title='2D: Original features')
 ax3.set(xlabel='Petal length', ylabel='Petal width', zlabel='Sepal length', title='3D: Original features')
 fig.legend(loc='upper center', ncol=3, bbox_to_anchor=(0.5, 1.04))
@@ -41,13 +46,13 @@ fig = plt.figure(figsize=(16, 4.5))
 ax1 = fig.add_subplot(131)
 ax2 = fig.add_subplot(132)
 ax3 = fig.add_subplot(133, projection='3d')
-for i in range(3):
-    mask = y == i
-    ax1.scatter(X_pca[mask, 0], np.full(mask.sum(), i), color=colours[i], alpha=0.7, label=names[i])
-    ax2.scatter(X_pca[mask, 0], X_pca[mask, 1], color=colours[i], alpha=0.7)
-    ax3.scatter(X_pca[mask, 0], X_pca[mask, 1], X_pca[mask, 2], color=colours[i], alpha=0.7)
+for i, species in enumerate(names):
+    mask = y == species
+    ax1.scatter(X_pca[mask, 0], np.full(mask.sum(), i), color=colors[i], alpha=0.7, label=species)
+    ax2.scatter(X_pca[mask, 0], X_pca[mask, 1], color=colors[i], alpha=0.7)
+    ax3.scatter(X_pca[mask, 0], X_pca[mask, 1], X_pca[mask, 2], color=colors[i], alpha=0.7)
 ax1.set(xlabel='PC1', ylabel='Species (display only)', title='1D PCA')
-ax1.set_yticks(range(3), names)
+ax1.set_yticks(range(len(names)), names)
 ax2.set(xlabel='PC1', ylabel='PC2', title='2D PCA')
 ax3.set(xlabel='PC1', ylabel='PC2', zlabel='PC3', title='3D PCA')
 fig.legend(loc='upper center', ncol=3, bbox_to_anchor=(0.5, 1.04))
@@ -58,10 +63,10 @@ fig.savefig('3/media/part3_pca.png', dpi=200, bbox_inches='tight')
 isomap = Isomap(n_neighbors=3, n_components=2)
 X_isomap = isomap.fit_transform(X)
 fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
-for i in range(3):
-    mask = y == i
-    axes[0].scatter(X_pca[mask, 0], X_pca[mask, 1], color=colours[i], alpha=0.7, label=names[i])
-    axes[1].scatter(X_isomap[mask, 0], X_isomap[mask, 1], color=colours[i], alpha=0.7)
+for i, species in enumerate(names):
+    mask = y == species
+    axes[0].scatter(X_pca[mask, 0], X_pca[mask, 1], color=colors[i], alpha=0.7, label=species)
+    axes[1].scatter(X_isomap[mask, 0], X_isomap[mask, 1], color=colors[i], alpha=0.7)
 axes[0].set(xlabel='PC1', ylabel='PC2', title='PCA (2D)')
 axes[1].set(xlabel='Isomap 1', ylabel='Isomap 2', title='Isomap (3 neighbors)')
 fig.legend(loc='upper center', ncol=3, bbox_to_anchor=(0.5, 1.05))

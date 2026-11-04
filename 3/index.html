@@ -73,7 +73,7 @@
     </figure>
 
     <h2 id="part2">Part 2 — Data Visualization</h2>
-    <p>The Iris dataset contains 150 observations across three species (Setosa, Versicolor, and Virginica). Each observation includes sepal length, sepal width, petal length, and petal width, all measured in centimeters. To marginalize the data as requested, I directly selected one, two, and three original feature dimensions without transforming them.</p>
+    <p>The Iris dataset was retrieved directly from the UCI Machine Learning Repository (dataset ID 53) using <code>ucimlrepo</code>. It contains 150 observations across three species (Setosa, Versicolor, and Virginica). Each observation includes sepal length, sepal width, petal length, and petal width, all measured in centimeters. To marginalize the data as requested, I directly selected one, two, and three original feature dimensions without transforming them.</p>
     <div class="a3-steps">
       <p><strong>1D:</strong> petal length</p>
       <p><strong>2D:</strong> petal length and petal width</p>
@@ -83,10 +83,10 @@
       <img src="./media/part2_features.png" alt="Iris visualizations with one, two, and three original features" loading="lazy">
       <div class="cap">Original-feature projections. The species coordinate in the 1D panel is used only to separate the groups visually; it is not a second input feature.</div>
     </div>
-    <p><strong>Comment.</strong> Petal length alone distinguishes Setosa fairly well because its petals are much shorter than those of the other two species. However, Versicolor and Virginica still overlap. Petal length versus petal width gives a particularly clear visualization of all three groups: Setosa is well isolated, and the other two species form largely distinct but partially overlapping clusters. Sepal length adds context in 3D, though it does not completely resolve the overlap. Of the projections shown, the <strong>petal-length/petal-width combination</strong> is the clearest and simplest view of class structure.</p>
+    <p>In the one-dimensional petal-length projection, Setosa is clearly separated from the other species, with petal lengths approximately between 1 and 2 cm. Versicolor and Virginica occupy higher, partially overlapping ranges. The two-dimensional petal-length/petal-width plot reveals three recognizable clusters: Setosa is completely separated, while Versicolor and Virginica overlap in a small region. Adding sepal length as a third feature reveals more of the distribution but does not fully eliminate the overlap. Among these selections, <strong>petal length and petal width</strong> provide the clearest, simplest class separation.</p>
 
     <h2 id="part3">Part 3 — Principal Component Analysis</h2>
-    <p>Unlike Part 2, PCA constructs new axes as linear combinations of all four original measurements. I fit scikit-learn's <code>PCA(n_components=4)</code> on the raw Iris features; the estimator centers each feature, and I did <strong>not</strong> standardize feature variances. The transformed coordinates were plotted using the leading one, two, and three principal components.</p>
+    <p>Unlike Part 2, PCA constructs new axes as linear combinations of all four original measurements. I fit scikit-learn's <code>PCA(n_components=4)</code> on the UCI Iris features; the estimator centers each feature, and I did <strong>not</strong> standardize feature variances. The transformed coordinates were plotted using the leading one, two, and three principal components.</p>
     <div class="eq">Xᶜ = X − μ<br>Z = Xᶜ W<br>W = [PC1, PC2, PC3, PC4]</div>
     <div class="plot">
       <img src="./media/part3_pca.png" alt="Iris dataset projected onto the first principal component, first two principal components, and first three principal components" loading="lazy">
@@ -97,13 +97,13 @@
     <div class="a3-table-wrap"><table>
       <thead><tr><th>Axis</th><th>Sepal length</th><th>Sepal width</th><th>Petal length</th><th>Petal width</th></tr></thead>
       <tbody>
-        <tr><td>PC1</td><td>0.3614</td><td>−0.0845</td><td>0.8567</td><td>0.3583</td></tr>
-        <tr><td>PC2</td><td>0.6566</td><td>0.7302</td><td>−0.1734</td><td>−0.0755</td></tr>
-        <tr><td>PC3</td><td>−0.5820</td><td>0.5979</td><td>0.0762</td><td>0.5458</td></tr>
-        <tr><td>PC4</td><td>0.3155</td><td>−0.3197</td><td>−0.4798</td><td>0.7537</td></tr>
+        <tr><td>PC1</td><td>0.3616</td><td>−0.0823</td><td>0.8566</td><td>0.3588</td></tr>
+        <tr><td>PC2</td><td>0.6565</td><td>0.7297</td><td>−0.1758</td><td>−0.0747</td></tr>
+        <tr><td>PC3</td><td>−0.5810</td><td>0.5964</td><td>0.0725</td><td>0.5491</td></tr>
+        <tr><td>PC4</td><td>0.3173</td><td>−0.3241</td><td>−0.4797</td><td>0.7511</td></tr>
       </tbody>
     </table></div>
-    <p><strong>Comment.</strong> The first principal component has its largest coefficient on petal length (0.8567), indicating that variation in this measurement strongly influences PC1. A single PCA axis already separates Setosa well, but Versicolor and Virginica still overlap. The PC1–PC2 plot reveals more of the separation, and PC3 makes some additional variation visible. PCA has therefore reduced four measurements to an easily plotted representation, while retaining contributions from every original feature.</p>
+    <p><strong>Comment.</strong> PC1 is most strongly influenced by petal length (coefficient 0.8566), while PC2 is primarily influenced by sepal length and sepal width (0.6565 and 0.7297). The one-dimensional PC1 projection clearly separates Setosa from the other species, but Versicolor and Virginica overlap. The PC1–PC2 projection reveals three recognizable groups, with overlap remaining between the latter two. PC3 adds some variation but does not completely separate those classes. The first two PCs already retain 97.76% of the total variance, so the third contributes relatively little additional variation.</p>
 
     <h2 id="part4">Part 4 — Data Compression</h2>
     <p>For centered data, the squared Frobenius norm equals the total sum of squared deviations. It is proportional to the sum of covariance eigenvalues, so retained variance after projection onto the first k PCs is the sum of their eigenvalues divided by the total.</p>
@@ -111,15 +111,15 @@
     <div class="a3-table-wrap"><table>
       <thead><tr><th>Component</th><th>Individual variance</th><th>Cumulative variance</th></tr></thead>
       <tbody>
-        <tr><td>PC1</td><td>92.4619%</td><td>92.4619%</td></tr>
-        <tr><td>PC2</td><td>5.3066%</td><td class="hero-num">97.7685%</td></tr>
-        <tr><td>PC3</td><td>1.7103%</td><td>99.4788%</td></tr>
-        <tr><td>PC4</td><td>0.5212%</td><td>100.0000%</td></tr>
+        <tr><td>PC1</td><td>92.4616%</td><td>92.4616%</td></tr>
+        <tr><td>PC2</td><td>5.3016%</td><td class="hero-num">97.7632%</td></tr>
+        <tr><td>PC3</td><td>1.7185%</td><td>99.4817%</td></tr>
+        <tr><td>PC4</td><td>0.5183%</td><td>100.0000%</td></tr>
       </tbody>
     </table></div>
     <h3>1. Variance explained by two dimensions</h3>
-    <div class="eq result"><strong>92.4619% + 5.3066% = 97.7685% ≈ 97.77%</strong></div>
-    <p>Two PCA dimensions retain nearly all of the original variance. Only about 2.23% of the total centered squared variation is lost.</p>
+    <div class="eq result"><strong>92.4616% + 5.3016% = 97.7632% ≈ 97.76%</strong></div>
+    <p>Two PCA dimensions retain nearly all of the original variance. Only about 2.24% of the total centered squared variation is lost.</p>
     <h3>2. Number of PCs needed for 50% variance</h3>
     <div class="eq result"><strong>PC1 alone = 92.46% &gt; 50% → 1 principal component</strong></div>
     <p><strong>Comment.</strong> PCA is a very effective compression method for this dataset: the four original features can be reduced to two with relatively little loss of variation. This statement concerns variance and squared reconstruction error, not necessarily how much information is retained for a classification task.</p>
@@ -139,25 +139,26 @@
       <thead><tr><th>Embedding</th><th>Silhouette score</th></tr></thead>
       <tbody>
         <tr><td>PCA (2 dimensions)</td><td>0.5344</td></tr>
-        <tr><td>ISOMAP (2 dimensions, k = 3)</td><td class="hero-num">0.5590</td></tr>
+        <tr><td>ISOMAP (2 dimensions, k = 3)</td><td class="hero-num">0.5598</td></tr>
       </tbody>
     </table></div>
     <div class="note"><strong>Important numerical limitation.</strong> With only three neighbors, the Iris nearest-neighbor graph contains <strong>two disconnected components</strong>. Scikit-learn warns about this and completes the graph so an ISOMAP embedding can be calculated. The ISOMAP result therefore depends in part on those added connections, and its apparent class separation should be interpreted cautiously.</div>
-    <p><strong>Comparison.</strong> ISOMAP has a slightly higher silhouette score (0.5590 versus 0.5344), which suggests modestly improved separation under this metric. Nonetheless, PCA is preferable for <strong>data compression</strong>: its first two components preserve 97.77% of variance and offer a direct linear reconstruction of the original centered measurements. ISOMAP does not optimize explained variance, so the PCA percentage cannot be applied directly to its embedding. ISOMAP may be somewhat preferable for visualizing class separation here, but its small gain and disconnected neighborhood graph limit how confidently we can claim an advantage.</p>
+    <p><strong>Comparison.</strong> ISOMAP has a slightly higher silhouette score (0.5598 versus 0.5344), an absolute increase of 0.0254, suggesting modestly improved separation under this metric. The ISOMAP plot shows Setosa as a narrow isolated cluster and more curved distributions for Versicolor and Virginica, which still overlap. Nonetheless, PCA is preferable for <strong>data compression</strong>: its first two components preserve 97.76% of variance and offer a direct linear reconstruction of the original centered measurements. ISOMAP does not optimize explained variance, so the PCA percentage cannot be applied directly to its embedding. ISOMAP may be somewhat preferable for visualizing class separation here, but its small gain and disconnected neighborhood graph limit how confidently we can claim an advantage.</p>
 
     <h2 id="source">Python Source</h2>
-    <p>The script includes the Iris feature projections, PCA vectors and variance calculation, the three-neighbor ISOMAP embedding, and the silhouette-score comparison. It uses NumPy, Matplotlib, and scikit-learn without extra helper functions.</p>
-    <div class="a3-links"><span class="badge">source</span> <a href="./code/SYDE_572_A3.py">Download full Python script</a> <a href="https://archive.ics.uci.edu/dataset/53/iris">Iris dataset (UCI)</a></div>
+    <p>The script fetches UCI Iris dataset 53 using <code>ucimlrepo</code>, then produces original-feature plots, PCA vectors and variance ratios, the three-neighbor ISOMAP embedding, and silhouette scores. It uses NumPy, Matplotlib, and scikit-learn without extra helper functions.</p>
+    <div class="a3-links"><span class="badge">source</span> <a href="./code/SYDE_572_A3_UCI.py">Download full Python script</a> <a href="https://archive.ics.uci.edu/dataset/53/iris">Iris dataset (UCI)</a></div>
     <details class="code a3-code">
       <summary>Show core PCA, variance, and ISOMAP code</summary>
-<pre><code>from sklearn.datasets import load_iris
+<pre><code>from ucimlrepo import fetch_ucirepo
 from sklearn.decomposition import PCA
 from sklearn.manifold import Isomap
 from sklearn.metrics import silhouette_score
 import numpy as np
 
-iris = load_iris()
-X, y = iris.data, iris.target
+iris = fetch_ucirepo(id=53)
+X = iris.data.features.to_numpy(dtype=float)
+y = iris.data.targets.iloc[:, 0].to_numpy()
 
 pca = PCA(n_components=4)
 X_pca = pca.fit_transform(X)
