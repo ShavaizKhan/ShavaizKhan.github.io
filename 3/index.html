@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assignment 3 — SYDE 572</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .a3-table-wrap { overflow-x: auto; max-width: var(--content-w); }
+    .a3-steps { background: var(--surface); border-left: 3px solid var(--teal); padding: 12px 18px; max-width: var(--content-w); border-radius: var(--radius); margin: 1rem 0; }
+    .a3-steps p { margin: .25em 0; }
+    .a3-scan-compact { max-width: 500px; }
+    .a3-scan-compact img { max-width: 100%; }
+    .a3-code { max-width: 960px; }
+    .a3-code pre { white-space: pre; }
+    .a3-links { margin: 1rem 0 1.5rem; }
+    .a3-links a { margin-right: 16px; }
+    @media (max-width: 680px) { .topbar-inner { flex-wrap: wrap; gap: 8px; } .topbar nav { display: flex; flex-wrap: wrap; gap: 12px; } .topbar a { margin-left: 0; } }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <span class="brand">SYDE 572</span>
+      <nav>
+        <a href="../index.html">Home</a>
+        <a href="#part1">Part 1</a>
+        <a href="#part2">Part 2</a>
+        <a href="#part3">Part 3</a>
+        <a href="#part4">Part 4</a>
+        <a href="#part5">Part 5</a>
+        <a href="#source">Code</a>
+      </nav>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <div class="hero">
+      <div class="kicker">Assignment 3</div>
+      <h1>Principal Component Analysis</h1>
+      <p class="lede">PCA by hand, visualizing the Iris dataset, measuring variance retained by dimensionality reduction, and comparing linear PCA with nonlinear ISOMAP.</p>
+    </div>
+
+    <h2 id="part1">Part 1 — PCA by Hand</h2>
+    <p>The five data points are (−2, −1), (−1, 0), (0, 1), (1, 2), and (2, 3). They all lie on the line <strong>x₂ = x₁ + 1</strong>, so one principal component can describe the complete dataset without loss. The following calculations are shown in the attached handwritten work.</p>
+
+    <h3>1. First principal component</h3>
+    <p>The feature means are 0 and 1. Subtracting the mean vector from each observation produces centered pairs (−2, −2), (−1, −1), (0, 0), (1, 1), and (2, 2). From this centered matrix, the sample covariance is:</p>
+    <div class="eq">μ = [0, 1]ᵀ<br>S = (1 / 4) Xᶜᵀ Xᶜ = [[2.5, 2.5], [2.5, 2.5]]<br>det(S − λI) = λ(λ − 5) = 0</div>
+    <p>The eigenvalues are 5 and 0. The eigenvector associated with the larger eigenvalue is [1, 1]ᵀ, which must be normalized to unit length.</p>
+    <div class="eq result"><strong>PC1 = (1 / √2)[1, 1]ᵀ ≈ [0.7071, 0.7071]ᵀ</strong></div>
+    <figure class="scan">
+      <img src="./media/part1_pc.png" alt="Handwritten solution computing mean centering, covariance, eigenvalues and the first principal component" loading="lazy">
+      <figcaption class="cap">Handwritten solution: data centering, covariance matrix, eigendecomposition, and PC1.</figcaption>
+    </figure>
+
+    <h3>2. Reconstruction error of (3, 3)</h3>
+    <p>With only PC1 retained, a point is projected onto the principal axis and reconstructed as x̂ = μ + wwᵀ(x − μ). The L2 error is the Euclidean distance from x to x̂.</p>
+    <div class="eq">x − μ = [3, 2]ᵀ<br>z = wᵀ(x − μ) = 5 / √2<br>x̂ = μ + zw = [2.5, 3.5]ᵀ</div>
+    <div class="eq result"><strong>‖x − x̂‖₂ = √[(3 − 2.5)² + (3 − 3.5)²] = √0.5 ≈ 0.7071</strong></div>
+    <figure class="scan a3-scan-compact">
+      <img src="./media/part1_reconstruction_33.png" alt="Handwritten PCA reconstruction error calculation for the point (3,3)" loading="lazy">
+      <figcaption class="cap">Handwritten solution: reconstruction of (3, 3).</figcaption>
+    </figure>
+
+    <h3>3. Reconstruction error of (3, 4)</h3>
+    <p>This point is already on the data line, so projection and reconstruction leave it unchanged.</p>
+    <div class="eq">x − μ = [3, 3]ᵀ<br>z = wᵀ(x − μ) = 6 / √2<br>x̂ = μ + zw = [3, 4]ᵀ</div>
+    <div class="eq result"><strong>‖x − x̂‖₂ = 0</strong></div>
+    <figure class="scan a3-scan-compact">
+      <img src="./media/part1_reconstruction_34.png" alt="Handwritten PCA reconstruction error calculation for the point (3,4)" loading="lazy">
+      <figcaption class="cap">Handwritten solution: exact reconstruction of (3, 4).</figcaption>
+    </figure>
+
+    <h2 id="part2">Part 2 — Data Visualization</h2>
+    <p>The Iris dataset contains 150 observations across three species (Setosa, Versicolor, and Virginica). Each observation includes sepal length, sepal width, petal length, and petal width, all measured in centimeters. To marginalize the data as requested, I directly selected one, two, and three original feature dimensions without transforming them.</p>
+    <div class="a3-steps">
+      <p><strong>1D:</strong> petal length</p>
+      <p><strong>2D:</strong> petal length and petal width</p>
+      <p><strong>3D:</strong> petal length, petal width, and sepal length</p>
+    </div>
+    <div class="plot">
+      <img src="./media/part2_features.png" alt="Iris visualizations with one, two, and three original features" loading="lazy">
+      <div class="cap">Original-feature projections. The species coordinate in the 1D panel is used only to separate the groups visually; it is not a second input feature.</div>
+    </div>
+    <p><strong>Comment.</strong> Petal length alone distinguishes Setosa fairly well because its petals are much shorter than those of the other two species. However, Versicolor and Virginica still overlap. Petal length versus petal width gives a particularly clear visualization of all three groups: Setosa is well isolated, and the other two species form largely distinct but partially overlapping clusters. Sepal length adds context in 3D, though it does not completely resolve the overlap. Of the projections shown, the <strong>petal-length/petal-width combination</strong> is the clearest and simplest view of class structure.</p>
+
+    <h2 id="part3">Part 3 — Principal Component Analysis</h2>
+    <p>Unlike Part 2, PCA constructs new axes as linear combinations of all four original measurements. I fit scikit-learn's <code>PCA(n_components=4)</code> on the raw Iris features; the estimator centers each feature, and I did <strong>not</strong> standardize feature variances. The transformed coordinates were plotted using the leading one, two, and three principal components.</p>
+    <div class="eq">Xᶜ = X − μ<br>Z = Xᶜ W<br>W = [PC1, PC2, PC3, PC4]</div>
+    <div class="plot">
+      <img src="./media/part3_pca.png" alt="Iris dataset projected onto the first principal component, first two principal components, and first three principal components" loading="lazy">
+      <div class="cap">PCA projections onto PC1; PC1–PC2; and PC1–PC2–PC3. Species is used as a display coordinate only in the 1D panel.</div>
+    </div>
+    <h3>Principal component vectors</h3>
+    <p>Each row is one unit PCA direction, with columns ordered as sepal length, sepal width, petal length, and petal width. Eigenvector sign is arbitrary.</p>
+    <div class="a3-table-wrap"><table>
+      <thead><tr><th>Axis</th><th>Sepal length</th><th>Sepal width</th><th>Petal length</th><th>Petal width</th></tr></thead>
+      <tbody>
+        <tr><td>PC1</td><td>0.3614</td><td>−0.0845</td><td>0.8567</td><td>0.3583</td></tr>
+        <tr><td>PC2</td><td>0.6566</td><td>0.7302</td><td>−0.1734</td><td>−0.0755</td></tr>
+        <tr><td>PC3</td><td>−0.5820</td><td>0.5979</td><td>0.0762</td><td>0.5458</td></tr>
+        <tr><td>PC4</td><td>0.3155</td><td>−0.3197</td><td>−0.4798</td><td>0.7537</td></tr>
+      </tbody>
+    </table></div>
+    <p><strong>Comment.</strong> The first principal component has its largest coefficient on petal length (0.8567), indicating that variation in this measurement strongly influences PC1. A single PCA axis already separates Setosa well, but Versicolor and Virginica still overlap. The PC1–PC2 plot reveals more of the separation, and PC3 makes some additional variation visible. PCA has therefore reduced four measurements to an easily plotted representation, while retaining contributions from every original feature.</p>
+
+    <h2 id="part4">Part 4 — Data Compression</h2>
+    <p>For centered data, the squared Frobenius norm equals the total sum of squared deviations. It is proportional to the sum of covariance eigenvalues, so retained variance after projection onto the first k PCs is the sum of their eigenvalues divided by the total.</p>
+    <div class="eq">‖Xᶜ‖²<sub>F</sub> = (n − 1) Σᵢ λᵢ<br>Explained variance (k PCs) = (λ₁ + ··· + λₖ) / Σᵢ λᵢ<br>Relative squared reconstruction error = 1 − explained variance</div>
+    <div class="a3-table-wrap"><table>
+      <thead><tr><th>Component</th><th>Individual variance</th><th>Cumulative variance</th></tr></thead>
+      <tbody>
+        <tr><td>PC1</td><td>92.4619%</td><td>92.4619%</td></tr>
+        <tr><td>PC2</td><td>5.3066%</td><td class="hero-num">97.7685%</td></tr>
+        <tr><td>PC3</td><td>1.7103%</td><td>99.4788%</td></tr>
+        <tr><td>PC4</td><td>0.5212%</td><td>100.0000%</td></tr>
+      </tbody>
+    </table></div>
+    <h3>1. Variance explained by two dimensions</h3>
+    <div class="eq result"><strong>92.4619% + 5.3066% = 97.7685% ≈ 97.77%</strong></div>
+    <p>Two PCA dimensions retain nearly all of the original variance. Only about 2.23% of the total centered squared variation is lost.</p>
+    <h3>2. Number of PCs needed for 50% variance</h3>
+    <div class="eq result"><strong>PC1 alone = 92.46% &gt; 50% → 1 principal component</strong></div>
+    <p><strong>Comment.</strong> PCA is a very effective compression method for this dataset: the four original features can be reduced to two with relatively little loss of variation. This statement concerns variance and squared reconstruction error, not necessarily how much information is retained for a classification task.</p>
+
+    <h2 id="part5">Part 5 — Nonlinear Components (ISOMAP)</h2>
+    <p>ISOMAP attempts to preserve distances along the data's local neighborhood structure, rather than only straight-line variance directions. With <strong>three nearest neighbors</strong> for every Iris observation, it constructs a nearest-neighbor graph, approximates geodesic distances using graph shortest paths, and embeds the result in two dimensions with multidimensional scaling.</p>
+    <div class="a3-steps">
+      <p><strong>Method:</strong> <code>Isomap(n_neighbors=3, n_components=2)</code></p>
+      <p><strong>Comparison:</strong> the PCA and ISOMAP projections both have two output dimensions and use the same Iris observations, measured in the same original input units.</p>
+      <p><strong>Metric:</strong> silhouette score using known flower species labels; higher values indicate better labeled-cluster separation in the embedded coordinates.</p>
+    </div>
+    <div class="plot">
+      <img src="./media/part5_isomap_vs_pca.png" alt="Side-by-side two-dimensional PCA and three-nearest-neighbor ISOMAP visualizations of Iris flowers" loading="lazy">
+      <div class="cap">A two-dimensional PCA embedding compared with ISOMAP using three nearest neighbors.</div>
+    </div>
+    <div class="a3-table-wrap"><table>
+      <thead><tr><th>Embedding</th><th>Silhouette score</th></tr></thead>
+      <tbody>
+        <tr><td>PCA (2 dimensions)</td><td>0.5344</td></tr>
+        <tr><td>ISOMAP (2 dimensions, k = 3)</td><td class="hero-num">0.5590</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note"><strong>Important numerical limitation.</strong> With only three neighbors, the Iris nearest-neighbor graph contains <strong>two disconnected components</strong>. Scikit-learn warns about this and completes the graph so an ISOMAP embedding can be calculated. The ISOMAP result therefore depends in part on those added connections, and its apparent class separation should be interpreted cautiously.</div>
+    <p><strong>Comparison.</strong> ISOMAP has a slightly higher silhouette score (0.5590 versus 0.5344), which suggests modestly improved separation under this metric. Nonetheless, PCA is preferable for <strong>data compression</strong>: its first two components preserve 97.77% of variance and offer a direct linear reconstruction of the original centered measurements. ISOMAP does not optimize explained variance, so the PCA percentage cannot be applied directly to its embedding. ISOMAP may be somewhat preferable for visualizing class separation here, but its small gain and disconnected neighborhood graph limit how confidently we can claim an advantage.</p>
+
+    <h2 id="source">Python Source</h2>
+    <p>The script includes the Iris feature projections, PCA vectors and variance calculation, the three-neighbor ISOMAP embedding, and the silhouette-score comparison. It uses NumPy, Matplotlib, and scikit-learn without extra helper functions.</p>
+    <div class="a3-links"><span class="badge">source</span> <a href="./code/SYDE_572_A3.py">Download full Python script</a> <a href="https://archive.ics.uci.edu/dataset/53/iris">Iris dataset (UCI)</a></div>
+    <details class="code a3-code">
+      <summary>Show core PCA, variance, and ISOMAP code</summary>
+<pre><code>from sklearn.datasets import load_iris
+from sklearn.decomposition import PCA
+from sklearn.manifold import Isomap
+from sklearn.metrics import silhouette_score
+import numpy as np
+
+iris = load_iris()
+X, y = iris.data, iris.target
+
+pca = PCA(n_components=4)
+X_pca = pca.fit_transform(X)
+print(pca.components_)
+print(pca.explained_variance_ratio_)
+print('Variance retained with 2 PCs:', pca.explained_variance_ratio_[:2].sum())
+print('PCs needed for 50%:', np.searchsorted(np.cumsum(pca.explained_variance_ratio_), 0.5) + 1)
+
+isomap = Isomap(n_neighbors=3, n_components=2)
+X_isomap = isomap.fit_transform(X)
+print('PCA silhouette:', silhouette_score(X_pca[:, :2], y))
+print('ISOMAP silhouette:', silhouette_score(X_isomap, y))</code></pre>
+    </details>
+  </main>
+  <footer>SYDE 572 — Assignment 3</footer>
+</body>
+</html>
