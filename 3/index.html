@@ -125,25 +125,118 @@
     <p>PCA is a very effective compression method for this dataset: the four original features can be reduced to two with relatively little loss of variation. This statement concerns variance and squared reconstruction error, not necessarily how much information is retained for a classification task.</p>
 
     <h2 id="part5">Part 5 — Nonlinear Components (ISOMAP)</h2>
-    <p>ISOMAP attempts to preserve distances along the data's local neighborhood structure, rather than only straight-line variance directions. With <strong>three nearest neighbors</strong> for every Iris observation, it constructs a nearest-neighbor graph, approximates geodesic distances using graph shortest paths, and embeds the result in two dimensions with multidimensional scaling.</p>
-    <div class="a3-steps">
-      <p><strong>Method:</strong> <code>Isomap(n_neighbors=3, n_components=2)</code></p>
-      <p><strong>Comparison:</strong> the PCA and ISOMAP projections both have two output dimensions and use the same Iris observations, measured in the same original input units.</p>
-      <p><strong>Metric:</strong> silhouette score using known flower species labels; higher values indicate better labeled-cluster separation in the embedded coordinates.</p>
+
+    <p>
+      ISOMAP was applied to the Iris dataset using
+      <strong>3 nearest neighbors</strong> to produce a two-dimensional
+      representation. Unlike PCA, which finds linear directions of maximum
+      variance, ISOMAP estimates geodesic distances through a nearest-neighbor
+      graph to capture nonlinear relationships in the data.
+    </p>
+
+    <h3>Method</h3>
+    <div class="eq">
+      PCA: maximize retained variance along orthogonal axes.<br>
+      ISOMAP: construct a 3-nearest-neighbor graph, estimate shortest-path
+      distances, and apply multidimensional scaling (MDS).
     </div>
+
     <div class="plot">
-      <img src="./media/part5_isomap_vs_pca.png" alt="Side-by-side two-dimensional PCA and three-nearest-neighbor ISOMAP visualizations of Iris flowers" loading="lazy">
-      <div class="cap">A two-dimensional PCA embedding compared with ISOMAP using three nearest neighbors.</div>
+      <img src="./media/part5_isomap_vs_pca.png"
+          alt="Comparison of 2D PCA and ISOMAP projections of the Iris dataset">
+      <div class="cap">
+        Figure 5. Two-dimensional PCA and ISOMAP representations of the
+        Iris dataset, colored by species. ISOMAP uses 3 nearest neighbors.
+      </div>
     </div>
-    <div class="a3-table-wrap"><table>
-      <thead><tr><th>Embedding</th><th>Silhouette score</th></tr></thead>
+
+    <h3>Classification comparison</h3>
+
+    <p>
+      To evaluate the ability of each representation to classify the Iris
+      species, a <strong>5-nearest-neighbors (KNN) classifier</strong> was
+      evaluated using stratified 5-fold cross-validation. PCA and ISOMAP
+      were fitted separately within each training fold to prevent data
+      leakage. Both methods reduced the original four features to two
+      dimensions before classification.
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>PCA (2D)</th>
+          <th>ISOMAP (2D)</th>
+        </tr>
+      </thead>
       <tbody>
-        <tr><td>PCA (2 dimensions)</td><td>0.5344</td></tr>
-        <tr><td>ISOMAP (2 dimensions, k = 3)</td><td class="hero-num">0.5598</td></tr>
+        <tr>
+          <td>Mean classification accuracy</td>
+          <td class="hero-num">96.67%</td>
+          <td>95.33%</td>
+        </tr>
+        <tr>
+          <td>Accuracy standard deviation</td>
+          <td class="hero-num">2.11%</td>
+          <td>4.00%</td>
+        </tr>
+        <tr>
+          <td>Silhouette score</td>
+          <td>0.5344</td>
+          <td>0.5598</td>
+        </tr>
+        <tr>
+          <td>Variance retained (2 PCs)</td>
+          <td class="hero-num">97.76%</td>
+          <td>Not directly comparable</td>
+        </tr>
       </tbody>
-    </table></div>
-    <div class="note"><strong>Important numerical limitation.</strong> With only three neighbors, the Iris nearest-neighbor graph contains <strong>two disconnected components</strong>. Scikit-learn warns about this and completes the graph so an ISOMAP embedding can be calculated. The ISOMAP result therefore depends in part on those added connections, and its apparent class separation should be interpreted cautiously.</div>
-    <p>ISOMAP has a slightly higher silhouette score (0.5598 versus 0.5344), an absolute increase of 0.0254, suggesting modestly improved separation under this metric. The ISOMAP plot shows Setosa as a narrow isolated cluster and more curved distributions for Versicolor and Virginica, which still overlap. Nonetheless, PCA is preferable for data compression: its first two components preserve 97.76% of variance and offer a direct linear reconstruction of the original centered measurements. ISOMAP does not optimize explained variance, so the PCA percentage cannot be applied directly to its embedding. ISOMAP may be somewhat preferable for visualizing class separation here, but its small gain and disconnected neighborhood graph limit how confidently we can claim an advantage.</p>
+    </table>
+
+    <p>
+      <strong>Classification results.</strong>
+      PCA achieved a mean classification accuracy of
+      <strong>96.67% (±2.11% standard deviation)</strong>, compared with
+      <strong>95.33% (±4.00%)</strong> for ISOMAP. Although ISOMAP had a
+      slightly higher silhouette score (0.5598 versus 0.5344), PCA achieved
+      marginally better and more consistent classification performance.
+      This demonstrates that better cluster separation does not necessarily
+      translate to higher classification accuracy.
+    </p>
+
+    <h3>Data compression and reconstruction</h3>
+
+    <p>
+      PCA retains <strong>97.76% of the original variance</strong> using
+      only two principal components and allows straightforward linear
+      reconstruction of the original measurements. ISOMAP instead attempts
+      to preserve nonlinear neighborhood relationships and does not provide
+      a directly comparable explained-variance measure or a straightforward
+      exact inverse transformation.
+    </p>
+
+    <div class="note">
+      <strong>ISOMAP limitation:</strong>
+      With 3 nearest neighbors, the neighborhood graph contained
+      disconnected components. Scikit-learn completed the graph before
+      computing the embedding. This occurred during cross-validation as
+      well, making the resulting representation sensitive to the added
+      connections between components.
+    </div>
+
+    <h3>Conclusion</h3>
+
+    <p>
+      Overall, <strong>PCA is preferable for the Iris dataset</strong>
+      under the evaluated criteria. It preserves nearly all of the original
+      variance, provides a simpler reconstruction method, and achieves
+      slightly higher classification accuracy than ISOMAP. While ISOMAP
+      produces a nonlinear representation with a marginally higher
+      silhouette score, this does not translate into improved classification
+      performance. The accuracy difference is small, however, so these
+      results do not establish that PCA will consistently outperform
+      ISOMAP on other datasets.
+    </p>
 
     <h2 id="source">Python Source</h2>
     <p>The script fetches UCI Iris dataset 53 using <code>ucimlrepo</code>, then produces original-feature plots, PCA vectors and variance ratios, the three-neighbor ISOMAP embedding, and silhouette scores. It uses NumPy, Matplotlib, and scikit-learn without extra helper functions.</p>

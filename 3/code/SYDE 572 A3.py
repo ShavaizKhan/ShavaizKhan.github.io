@@ -4,6 +4,9 @@ from ucimlrepo import fetch_ucirepo
 from sklearn.decomposition import PCA
 from sklearn.manifold import Isomap
 from sklearn.metrics import silhouette_score
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import make_pipeline
 
 # UCI Machine Learning Repository: Iris (dataset ID 53)
 iris = fetch_ucirepo(id=53)
@@ -74,4 +77,20 @@ fig.tight_layout()
 fig.savefig('3/media/part5_isomap_vs_pca.png', dpi=200, bbox_inches='tight')
 print(f'PCA 2D silhouette score (species labels): {silhouette_score(X_pca[:, :2], y):.4f}')
 print(f'Isomap 2D silhouette score (species labels): {silhouette_score(X_isomap, y):.4f}')
+
+# Classification comparison: fit dimensionality reduction inside each training fold
+# to avoid data leakage from the held-out test fold.
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+pca_classifier = make_pipeline(PCA(n_components=2), KNeighborsClassifier(n_neighbors=5))
+isomap_classifier = make_pipeline(Isomap(n_neighbors=3, n_components=2), KNeighborsClassifier(n_neighbors=5))
+
+pca_accuracy = cross_val_score(pca_classifier, X, y, cv=cv, scoring='accuracy')
+isomap_accuracy = cross_val_score(isomap_classifier, X, y, cv=cv, scoring='accuracy')
+
+print('PCA classification accuracies by fold:', np.round(pca_accuracy, 4))
+print(f'PCA mean classification accuracy: {pca_accuracy.mean():.2%} (+/- {pca_accuracy.std():.2%} SD)')
+print('Isomap classification accuracies by fold:', np.round(isomap_accuracy, 4))
+print(f'Isomap mean classification accuracy: {isomap_accuracy.mean():.2%} (+/- {isomap_accuracy.std():.2%} SD)')
+
 plt.show()
