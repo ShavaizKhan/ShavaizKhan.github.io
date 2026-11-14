@@ -1,0 +1,77 @@
+{
+  "total": 11914,
+  "train": 9531,
+  "test": 2383,
+  "vocabulary": 52392,
+  "sentiment_accuracy": 0.8153587914393622,
+  "topic_accuracy": 0.9060008392782207,
+  "learning_curve": {
+    "953": 0.7582878724297104,
+    "1906": 0.7834662190516156,
+    "2859": 0.7926982794796475,
+    "3812": 0.7968946705832983,
+    "4765": 0.7964750314729333,
+    "5718": 0.8090642047838859,
+    "6671": 0.8103231221149811,
+    "7624": 0.8120016785564415,
+    "8577": 0.8174569869911876,
+    "9531": 0.8153587914393622
+  },
+  "gaussian_iris_accuracy": 0.975,
+  "linear_svc_accuracy": 0.853545950482585,
+  "mlp_accuracy": 0.8283676038606799,
+  "feature_comparison": {
+    "unigrams": 0.8153587914393622,
+    "negation": 0.8052874527906001,
+    "bigrams": 0.8556441460344104,
+    "both": 0.8590012589173311
+  },
+  "domain_comparison": {
+    "books_to_books": 0.7984084880636605,
+    "books_to_camera": 0.6484375,
+    "camera_to_books": 0.7002652519893899,
+    "camera_to_camera": 0.8828125
+  },
+  "paired_test": {
+    "baseline_only_correct": 75,
+    "enhanced_only_correct": 179,
+    "p_value": 5.570026533787799e-11
+  },
+  "error_examples": [
+    {
+      "margin": 127.71379099366095,
+      "index": 2226,
+      "actual": "neg",
+      "predicted": "pos",
+      "excerpt": "we bought this camera thinking that it would be our do-all \" eurocam \" for an upcoming trip to europe . it promised a sufficient range of performance and features to easily meet our needs on such a trip . sadly , the camera is not up to filling this role . we will need to take another camera along with it . however , we will take the v705 for its wide-angle lens , the reason that we picked this model in the first"
+    },
+    {
+      "margin": 91.43700863154118,
+      "index": 746,
+      "actual": "neg",
+      "predicted": "pos",
+      "excerpt": "i grew up reading harold evan 's sunday times - in the late 1970s it provided a window on the world that few other papers could . i particularly remember comprehensive coverage of egyptian president sadats historic visit to jerusalem ; ongoing coverage of soviet dissidents and a very welcome ( i 'm irish ) editorial urging britain to consider withdrawal from northern ireland . however , from today 's perspective , the paper 's foreign coverage seemed to be written from a point of"
+    },
+    {
+      "margin": 67.91770807271268,
+      "index": 1287,
+      "actual": "pos",
+      "predicted": "neg",
+      "excerpt": "i 've been using norton antivirus 2002 with annual updates of patches forever with norton internet security 2003. now that it 's time to renewal norton antivirus , i thought i switch to trend micro internet secuirty 2005 after all the glowing wins it received from certain mainstream computer magazines . i like norton 2002 but it was a memory resident hog in the taskmanager considering i was running a p3 500 laptop with 196mb on winxp pro , resources are valuable . also newer"
+    },
+    {
+      "margin": 44.25036762596301,
+      "index": 63,
+      "actual": "neg",
+      "predicted": "pos",
+      "excerpt": "the decalogue is one of several excellent tv series by european directors that puts us tv to shame . like bergman 's \" scenes from a marriage \" & \" fanny & alexander , \" von trier 's \" the kingdom , \" fassbinder 's \" berlin alexanderplatz , \" kusturica 's \" underground , \" and petersen 's \" das boot , \" the decalogue was initially conceived as a series on television and eventually brought to us viewers ' attention on the large"
+    },
+    {
+      "margin": 38.68310761695102,
+      "index": 1237,
+      "actual": "pos",
+      "predicted": "neg",
+      "excerpt": "i installed norton antivirus 2007 immediately after installing windows vista , office 2007 and other software on a new computer . installation ran smoothly . liveupdate ran automatically and updated the product without a hitch . norton antivirus 2007 not only detects viruses , it detects spyware and rootkits as well . it has an inbound firewall , and apparently some limited outbound firewall capabilities . it does not protect against phishing , identity theft , or spam , nor does it contain full outbound"
+    }
+  ]
+}

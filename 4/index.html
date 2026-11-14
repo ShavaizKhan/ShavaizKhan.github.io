@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="SYDE 572 Assignment 4: Naive Bayes sentiment classification from scratch, evaluation and optional experiments.">
+  <title>Assignment 4 — SYDE 572</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .a4-table-wrap { max-width: var(--content-w, 960px); overflow-x: auto; margin: 1rem 0; }
+    .a4-table-wrap table { min-width: 480px; }
+    .a4-note { max-width: var(--content-w, 960px); padding: 13px 17px; margin: 1rem 0; background: var(--surface, #f0f7f5); border-left: 3px solid var(--teal, #168c87); border-radius: var(--radius, 5px); }
+    .a4-note p { margin: .4rem 0; }
+    .a4-links { display: flex; flex-wrap: wrap; gap: 18px; margin: 1rem 0 1.75rem; }
+    .a4-code { max-width: 960px; }
+    .a4-code pre { overflow-x: auto; }
+    .a4-metric { font-weight: 700; }
+    .a4-error td:last-child { min-width: 340px; }
+    .a4-summary { max-width: var(--content-w, 960px); }
+    @media (max-width: 750px) { .topbar-inner { flex-wrap: wrap; gap: 8px; } .topbar nav { display: flex; flex-wrap: wrap; gap: 11px; } .topbar a { margin-left: 0; } }
+  </style>
+</head>
+<body>
+  <div class="topbar"><div class="topbar-inner">
+    <span class="brand">SYDE 572</span>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="#method">Method</a>
+      <a href="#results">Results</a>
+      <a href="#errors">Errors</a>
+      <a href="#optional">Optional tasks</a>
+      <a href="#source">Code</a>
+    </nav>
+  </div></div>
+
+  <main class="wrap">
+    <div class="hero">
+      <div class="kicker">Assignment 4</div>
+      <h1>Text Classification with Naive Bayes</h1>
+      <p class="lede">Implementing a multinomial Naive Bayes sentiment classifier from scratch and investigating how features, training data, and review domains affect performance.</p>
+    </div>
+
+    <h2 id="method">Part 1 — Method and implementation</h2>
+    <p>The dataset contains <strong>11,914 tokenized customer reviews</strong> from six product domains (books, camera, DVD, health, music and software). Each record contains a domain label, a positive/negative sentiment label, a document identifier and the review tokens. Only the review text and sentiment are used for the required classification task; domain labels are retained for optional experiments.</p>
+    <div class="a4-table-wrap"><table><thead><tr><th>Data split</th><th>Reviews</th></tr></thead><tbody>
+      <tr><td>Training (first 80%)</td><td>9,531</td></tr>
+      <tr><td>Evaluation (last 20%)</td><td>2,383</td></tr>
+      <tr><td>Training vocabulary</td><td>52,392 distinct tokens</td></tr>
+    </tbody></table></div>
+    <h3>Training the classifier</h3>
+    <p>For each sentiment label, I count documents and word occurrences to estimate a class prior and conditional word probabilities. I use <strong>add-one (Laplace) smoothing</strong> so words absent from one class still receive nonzero probability.</p>
+    <div class="eq">P(c) = N<sub>c</sub> / N<br>P(w | c) = (count(w, c) + 1) / (total tokens in c + |V|)</div>
+    <h3>Scoring a new review</h3>
+    <p>The classifier uses the multinomial bag-of-words assumption and accumulates log probabilities, avoiding numerical underflow from multiplying many small values. Tokens never observed in training are ignored when classifying unseen reviews.</p>
+    <div class="eq">score(d, c) = log P(c) + Σ<sub>w in d</sub> count(w, d) log P(w | c)<br>predicted sentiment = argmax<sub>c ∈ {pos, neg}</sub> score(d, c)</div>
+    <p>The functions <code>train_nb()</code>, <code>score_doc_label()</code>, <code>classify_nb()</code> and <code>classify_documents()</code> implement this method directly with Python word counts. <strong>No scikit-learn Naive Bayes estimator is used.</strong></p>
+    <div class="a4-note"><p><strong>Sanity checks.</strong> The word <em>great</em> receives a higher joint score for positive sentiment, while <em>bad</em> favors negative sentiment. Scoring an example containing an unseen word, such as <code>['a', 'top-quality', 'performance']</code>, does not crash.</p></div>
+
+    <h2 id="results">Part 2 — Sentiment classification results</h2>
+    <p>The model predicts review sentiment on the 20% evaluation portion, which was not used to estimate model parameters.</p>
+    <div class="eq result"><strong>Test accuracy = 81.54% = 1,943 / 2,383 reviews classified correctly</strong></div>
+    <p>The classifier correctly labels 1,943 reviews and misclassifies 440. Performance is substantially above a 50% balanced-class guessing benchmark, showing that word occurrence statistics capture useful sentiment signals despite their simplicity.</p>
+
+    <h2 id="errors">Part 3 — Error analysis</h2>
+    <p>I inspected reviews whose predicted label differs from the true sentiment. The examples below are from the held-out evaluation set; the excerpts show only the beginning of each review, not necessarily the words responsible for the entire prediction.</p>
+    <div class="a4-table-wrap a4-error"><table><thead><tr><th>Example</th><th>Actual</th><th>Predicted</th><th>Review excerpt</th></tr></thead><tbody><tr><td>1</td><td>neg</td><td>pos</td><td>“we bought this camera thinking that it would be our do-all &quot; eurocam &quot; for an upcoming trip to europe . it promised a sufficient range of performance and features to easily meet our nee…”</td></tr>
+<tr><td>2</td><td>neg</td><td>pos</td><td>“i grew up reading harold evan &#x27;s sunday times - in the late 1970s it provided a window on the world that few other papers could . i particularly remember comprehensive coverage of egypt…”</td></tr>
+<tr><td>3</td><td>pos</td><td>neg</td><td>“i &#x27;ve been using norton antivirus 2002 with annual updates of patches forever with norton internet security 2003. now that it &#x27;s time to renewal norton antivirus , i thought i switch to…”</td></tr></tbody></table></div>
+    <p>Some negative reviews open with praise before describing disappointment, and some positive reviews contain negative comparisons with competing products. These mixed signals can mislead a bag-of-words classifier because it counts words without modeling the scope of negation, ordering of arguments or which product a statement refers to. Long reviews may also contain many sentiment-bearing words that overwhelm the overall judgment. The examples were selected by absolute log-score margin, which can grow with review length, so a large margin does not by itself imply a calibrated probability of being wrong.</p>
+
+    <h2 id="optional">Part 4 — Optional experiments</h2>
+    <h3>4.1 Six-category topic classification</h3>
+    <p>The same Naive Bayes training and prediction functions can classify the <em>topic</em> instead of the sentiment. Here the six possible labels are books, camera, DVD, health, music and software.</p>
+    <div class="eq result"><strong>Six-category topic accuracy: 90.60%</strong></div>
+    <p>Topic-specific vocabulary provides a strong signal: words about lenses, books, films, or computer programs can help identify a review's domain. This result is not directly comparable with the binary sentiment accuracy because the targets and chance-level baselines differ.</p>
+
+    <h3>4.2 Learning curve</h3>
+    <p>The evaluation set is held fixed while training uses increasing fractions of the original 80% training portion. Accuracy generally rises as additional labeled reviews are included, with smaller improvements near the end.</p>
+    <div class="plot"><img src="./media/learning_curve.png" alt="Sentiment classification accuracy versus number of training reviews" loading="lazy"><div class="cap">Figure 1. Held-out sentiment accuracy for increasing training-set sizes; evaluation reviews remain unchanged.</div></div>
+    <details><summary>View learning-curve values</summary><div class="a4-table-wrap"><table><thead><tr><th>Training fraction</th><th>Reviews used</th><th>Accuracy</th></tr></thead><tbody><tr><td>10%</td><td>953</td><td>75.83%</td></tr>
+<tr><td>20%</td><td>1,906</td><td>78.35%</td></tr>
+<tr><td>30%</td><td>2,859</td><td>79.27%</td></tr>
+<tr><td>40%</td><td>3,812</td><td>79.69%</td></tr>
+<tr><td>50%</td><td>4,765</td><td>79.65%</td></tr>
+<tr><td>60%</td><td>5,718</td><td>80.91%</td></tr>
+<tr><td>70%</td><td>6,671</td><td>81.03%</td></tr>
+<tr><td>80%</td><td>7,624</td><td>81.20%</td></tr>
+<tr><td>90%</td><td>8,577</td><td>81.75%</td></tr>
+<tr><td>100%</td><td>9,531</td><td>81.54%</td></tr></tbody></table></div></details>
+
+    <h3>4.3 Most informative words</h3>
+    <p>To inspect which words favor each class, tokens are ranked by a smoothed positive-versus-negative log-likelihood ratio. The visualization omits very rare words (fewer than 25 total appearances) to reduce noisy rankings. Larger positive values favor positive sentiment; larger negative values favor negative sentiment.</p>
+    <div class="plot"><img src="./media/informative_words.png" alt="Words indicative of positive or negative sentiment ranked by smoothed log likelihood ratio" loading="lazy"><div class="cap">Figure 2. Selected words associated with positive and negative customer reviews.</div></div>
+    <p>Words such as <em>waste</em>, <em>horrible</em>, <em>excellent</em>, and <em>amazing</em> are intuitive sentiment indicators. However, names or topic-related terms such as <em>pluto</em>, <em>keaton</em>, and <em>commander</em> also appear in the rankings. These are correlations learned from this dataset, not words with universally positive sentiment. A word quoted or used in a comparison can also be misleading when its surrounding context is ignored.</p>
+
+    <h3>4.4 Gaussian Naive Bayes for numerical data</h3>
+    <p>I extended the probabilistic approach to the Iris dataset using Gaussian likelihoods instead of discrete word frequencies. For each class and numerical feature, the training function estimates a mean and maximum-likelihood variance; class scores use Gaussian log densities. The numerical classifier is implemented from scratch.</p>
+    <div class="eq">log P(x | c) = −½ Σ<sub>j</sub> [log(2πσ²<sub>cj</sub>) + (x<sub>j</sub> − μ<sub>cj</sub>)² / σ²<sub>cj</sub>]</div>
+    <div class="eq result"><strong>Iris classification accuracy: 97.50% (39 / 40 test flowers)</strong></div>
+    <p>A seeded random permutation selects 110 flowers for training and 40 for testing. Scikit-learn is used to <em>load</em> Iris, not to train the Gaussian Naive Bayes classifier.</p>
+
+    <h3>4.5 Alternative classifiers using scikit-learn</h3>
+    <p>For this explicitly optional comparison, the same review training/evaluation split was used with TF-IDF features and two library-based classifiers.</p>
+    <div class="a4-table-wrap"><table><thead><tr><th>Classifier</th><th>Evaluation accuracy</th></tr></thead><tbody>
+      <tr><td>From-scratch Naive Bayes (unigrams)</td><td>81.54%</td></tr>
+      <tr><td>TF-IDF + LinearSVC</td><td>85.35%</td></tr>
+      <tr><td>TF-IDF + selected features + MLP</td><td>82.84%</td></tr>
+    </tbody></table></div>
+    <p>LinearSVC outperforms the original unigram Naive Bayes baseline in this experiment. The MLP also improves on the baseline, but its score is lower than LinearSVC's. MLP performance may vary slightly between runs because of random initialization. These models have different representations and training procedures, so the comparison is empirical rather than a controlled comparison of algorithms alone.</p>
+
+    <h3>4.6 Improving features with negation and bigrams</h3>
+    <p>I tested plain unigrams, negation-marked words, adjacent-word bigrams, and a combination of both. All four configurations use the same from-scratch Naive Bayes implementation and the same held-out evaluation set.</p>
+    <div class="a4-table-wrap"><table><thead><tr><th>Feature set</th><th>Test accuracy</th></tr></thead><tbody><tr><td>Unigrams (baseline)</td><td>81.54%</td></tr>
+<tr><td>Negation markers</td><td>80.53%</td></tr>
+<tr><td>Unigrams + bigrams</td><td>85.56%</td></tr>
+<tr><td>Bigrams + negation</td><td>85.90%</td></tr></tbody></table></div>
+    <div class="eq result"><strong>Best result: 85.90% with bigrams + negation (+4.36 percentage points)</strong></div>
+    <p>Adjacent-word bigrams capture local expressions that isolated words miss. Negation markers by themselves did not improve performance here, but combining them with bigrams produced the best tested accuracy. In a paired comparison, the combined model corrected 179 examples missed by the baseline, while the baseline alone was correct on 75 examples. An exact McNemar test yielded <strong>p ≈ 5.57 × 10⁻¹¹</strong>, suggesting the prediction differences are not simply symmetric random disagreements.</p>
+    <div class="a4-note"><p><strong>Evaluation caveat.</strong> The same evaluation set was used to explore multiple feature variants. The reported best accuracy is descriptive; an entirely separate final test set would be needed for an unbiased estimate after selecting features.</p></div>
+
+    <h3>4.7 Domain sensitivity</h3>
+    <p>Separate sentiment models were trained on books and camera reviews. Each was evaluated both on its own domain and on the other domain, using the original training/evaluation partition.</p>
+    <div class="a4-table-wrap"><table><thead><tr><th>Training domain</th><th>Books test</th><th>Camera test</th></tr></thead><tbody>
+      <tr><td>Books</td><td>79.84%</td><td>64.84%</td></tr>
+      <tr><td>Camera</td><td>70.03%</td><td>88.28%</td></tr>
+    </tbody></table></div>
+    <p>A camera-trained classifier falls from <strong>88.28%</strong> on camera reviews to <strong>70.03%</strong> on books reviews. Similarly, books-to-camera transfer performs notably worse than books-to-books classification. This indicates that sentiment language and token frequencies are domain-dependent.</p>
+
+    <h2 id="conclusion">Conclusion</h2>
+    <p>The from-scratch multinomial Naive Bayes classifier achieved <strong>81.54%</strong> sentiment accuracy. It is simple, interpretable and effective, but has difficulty with context, mixed judgments, and negation. Adding bigrams and negation markers improved accuracy to <strong>85.90%</strong>. The optional topic, Gaussian, alternative-model and cross-domain experiments show how the same probabilistic approach generalizes to different tasks, while also revealing the limits of a simple bag-of-words model.</p>
+
+    <h2 id="source">Source code and reproducibility</h2>
+    <p>The submission uses one shared multinomial Naive Bayes implementation across sentiment classification, topic prediction, learning curves, feature engineering, and domain comparisons. Gaussian Naive Bayes has separate likelihood functions because numerical inputs require a different distribution. Scikit-learn estimators are used only in the explicitly optional alternative-classifier experiment.</p>
+    <div class="a4-links">
+      <a href="./code/syde572_assignment4.py" download>Python source</a>
+      <a href="./code/results_all.json" download>Experiment results (JSON)</a>
+      <a href="./code/all_sentiment_shuffled.txt" download>Review dataset</a>
+    </div>
+    <div class="eq">pip install numpy matplotlib scipy scikit-learn<br>python syde572_assignment4.py</div>
+    <p>Run the Python script from its directory, with <code>all_sentiment_shuffled.txt</code> beside it. The script generates the results JSON and two plots; the site displays copies in <code>4/media/</code>. The figures and linked result files should be regenerated after any further script changes so all published measurements agree.</p>
+    <details class="code a4-code"><summary>View the source code</summary><p>Open or download the <a href="./code/syde572_assignment4.py">complete Python script</a>. The page links to the source directly to avoid duplicating a long program inside the HTML document.</p></details>
+  </main>
+</body>
+</html>
